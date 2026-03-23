@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
 
     if (insertError) {
       console.error("Failed to save webhook audit log:", insertError)
-      return NextResponse.json({ error: "Storage error" }, { status: 500 })
+      return NextResponse.json({ error: "Storage error", details: insertError }, { status: 500 })
     }
 
     // 2. We acknowledge receipt so WooCommerce does not timeout.
@@ -67,8 +67,8 @@ export async function POST(req: NextRequest) {
     // processOrderItems(payload) -> deduct stock -> update webhook_events processed = true ...
 
     return NextResponse.json({ success: true, eventId: event?.id }, { status: 200 })
-  } catch (error) {
+  } catch (error: any) {
     console.error("Webhook processing error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return NextResponse.json({ error: "Internal server error", message: error?.message || String(error) }, { status: 500 })
   }
 }
