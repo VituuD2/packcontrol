@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import crypto from "crypto"
-import { createClient } from "@/lib/supabase/server"
+import { createClient } from "@supabase/supabase-js"
 
 // Avoid caching webhooks
 export const dynamic = "force-dynamic"
@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
     const body = await req.text()
     
     // Validate WooCommerce HMAC-SHA256 signature if a secret is provided in ENV
-    const secret = process.env.WOOCOMMERCE_WEBHOOK_SECRET
+    const secret = process.env.WC_WEBHOOK_SECRET
     if (secret && signature) {
       const expectedSignature = crypto
         .createHmac("sha256", secret)
@@ -35,7 +35,10 @@ export async function POST(req: NextRequest) {
 
     // Initialize Supabase (with Service Role key or standard client if configured for RLS bypass)
     // Note: It's recommended to use the `supabase_service_role_key` for webhook handlers.
-    const supabaseClient = await createClient()
+    const supabaseClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
 
     // 1. Audit Log: Insert raw webhook payload
     const { data: event, error: insertError } = await supabaseClient
