@@ -57,10 +57,8 @@ export default async function PackagingPage() {
         </div>
 
         <Dialog>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 w-4 h-4" /> Add Item
-            </Button>
+          <DialogTrigger render={<Button />}>
+            <Plus className="mr-2 w-4 h-4" /> Add Item
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <form action={addPackaging}>
