@@ -1,32 +1,122 @@
 import { NextRequest, NextResponse } from "next/server"
 
+// Avoid caching
+export const dynamic = "force-dynamic"
+import { createClient } from "@supabase/supabase-js"
+
 export async function POST(req: NextRequest) {
   try {
     const { consumerKey, consumerSecret } = await req.json()
-
-    if (!consumerKey || !consumerSecret) {
-      return NextResponse.json({ 
-        error: "Missing credentials", 
-        message: "Please configure your WooCommerce API keys in Settings first." 
-      }, { status: 400 })
+    // We don't strictly enforce WooCommerce API keys here since we are just reprocessing our native Supabase queue.
+    
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    if (!supabaseUrl || !supabaseKey) {
+       return NextResponse.json({ error: "Supabase not configured" }, { status: 500 })
     }
 
-    // Since we don't know the exact WooCommerce URL, this endpoint validates the payload
-    // and would traditionally execute a fetch request to the WC API.
-    // For this implementation, we simulate a successful sync acknowledgment.
-    console.log("Force Sync triggered with credentials:", { ck: consumerKey ? "Provided" : "Missing" })
+    const supabaseClient = createClient(supabaseUrl, supabaseKey)
 
-    // A real implementation would:
-    // 1. Fetch `https://YOUR_DOMAIN/wp-json/wc/v3/orders`
-    // 2. Iterate through orders and cross-reference with Supabase `webhook_events`
-    // 3. Process missing orders to deduct packaging stock.
+    // 1. Fetch unprocessed events
+    const { data: pendingEvents, error: fetchError } = await supabaseClient
+      .from("webhook_events")
+      .select("*")
+      .eq("processed", false)
+
+    if (fetchError) {
+      return NextResponse.json({ error: "Database error", details: fetchError }, { status: 500 })
+    }
+
+    let newlyProcessedCount = 0;
+
+    // 2. Reprocess logic (same as webhook route)
+    for (const event of pendingEvents || []) {
+      const payload = event.payload;
+      
+      if (!payload?.line_items || !Array.isArray(payload.line_items)) {
+         continue; 
+      }
+
+      let successfullyProcessed = true;
+
+      for (const line_item of payload.line_items) {
+        const itemSku = line_item.sku;
+        const purchaseQty = Number(line_item.quantity) || 1;
+
+        if (!itemSku) continue;
+
+        const { data: productData, error: productError } = await supabaseClient
+          .from("products")
+          .select(`id, sku, product_packaging_rules (packaging_item_id, quantity_used)`)
+          .eq("sku", itemSku)
+          .single();
+
+        if (productError || !productData) {
+          // Auto-registration
+          await supabaseClient.from("products").insert({
+            sku: itemSku,
+            name: line_item.name || "Auto-imported Product",
+            active: false
+          });
+          successfullyProcessed = false;
+          continue;
+        }
+
+        if (productData.product_packaging_rules && Array.isArray(productData.product_packaging_rules) && productData.product_packaging_rules.length > 0) {
+          for (const rule of productData.product_packaging_rules) {
+            const deductionAmount = purchaseQty * Number(rule.quantity_used);
+
+            const { data: packagingItemData } = await supabaseClient
+              .from("packaging_items")
+              .select("current_stock")
+              .eq("id", rule.packaging_item_id)
+              .single();
+
+            if (!packagingItemData) continue;
+            
+            const newStock = (Number(packagingItemData.current_stock) || 0) - deductionAmount;
+
+            const { error: updateError } = await supabaseClient
+              .from("packaging_items")
+              .update({ current_stock: newStock })
+              .eq("id", rule.packaging_item_id);
+
+            if (updateError) {
+              successfullyProcessed = false;
+              continue;
+            }
+
+            await supabaseClient
+              .from("packaging_movements")
+              .insert({
+                packaging_item_id: rule.packaging_item_id,
+                movement_type: "out",
+                quantity: deductionAmount,
+                source_type: "order",
+                source_id: String(payload.id || payload.number || itemSku)
+              });
+          }
+        } else {
+          successfullyProcessed = false;
+        }
+      }
+
+      if (successfullyProcessed) {
+        await supabaseClient
+          .from("webhook_events")
+          .update({ processed: true })
+          .eq("id", event.id);
+        newlyProcessedCount++;
+      }
+    }
 
     return NextResponse.json({ 
       success: true, 
       message: "Sync complete",
-      synced_orders: 0 // Mock value indicating no new orders found in the sync window
+      synced_orders: newlyProcessedCount 
     }, { status: 200 })
   } catch (error: any) {
+    console.error("Sync error:", error)
     return NextResponse.json({ 
       error: "Internal server error", 
       message: error?.message || String(error) 

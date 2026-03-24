@@ -38,6 +38,15 @@ export default async function Dashboard() {
   if (yestCount > 0) orderTrend = Math.round(((todayCount - yestCount) / yestCount) * 100)
   else if (todayCount > 0) orderTrend = 100
 
+  // Fetch Unprocessed Orders
+  const { count: unprocessedCount } = await supabase
+    .from('webhook_events')
+    .select('*', { count: 'exact', head: true })
+    .eq('processed', false)
+    .in('event_type', ['order.created', 'order.updated'])
+    
+  const unprocessedOrdersCount = unprocessedCount || 0
+
   // Fetch Packaging Items for Low Stock alerts
   const { data: packagingItems } = await supabase
     .from('packaging_items')
@@ -155,13 +164,16 @@ export default async function Dashboard() {
         
         <Card className="rounded-[1.25rem] border-0 shadow-[0_2px_20px_rgb(0,0,0,0.04)] bg-white p-2 flex flex-col">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-5 pt-5">
-            <span className="text-[13px] font-semibold text-muted-foreground tracking-wide">SYNC</span>
-            <div className="p-2 bg-emerald-50 rounded-xl text-emerald-500"><TrendingUp className="h-4 w-4" /></div>
+            <span className="text-[13px] font-semibold text-muted-foreground tracking-wide">PENDING SYNC</span>
+            <div className={`p-2 rounded-xl ${unprocessedOrdersCount > 0 ? "bg-amber-50 text-amber-500" : "bg-emerald-50 text-emerald-500"}`}>
+               {unprocessedOrdersCount > 0 ? <AlertTriangle className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
+            </div>
           </CardHeader>
           <CardContent className="px-5 pb-5">
             <div className="flex items-end gap-3">
-              <span className="text-4xl font-extrabold tracking-tighter text-emerald-500">Active</span>
+              <span className={`text-4xl font-extrabold tracking-tighter ${unprocessedOrdersCount > 0 ? "text-amber-500" : "text-emerald-500"}`}>{unprocessedOrdersCount}</span>
             </div>
+            {unprocessedOrdersCount > 0 && <span className="text-xs font-semibold text-amber-500 mt-1 block">Orders missing SKUs/Recipes</span>}
           </CardContent>
         </Card>
       </div>

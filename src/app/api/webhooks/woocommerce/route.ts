@@ -114,12 +114,21 @@ export async function POST(req: NextRequest) {
           .single();
 
         if (productError || !productData) {
-          console.warn(`Webhook sync: SKU ${itemSku} completely unregistered in our system. Skipping deduction.`);
+          console.warn(`Webhook sync: SKU ${itemSku} unregistered. Auto-creating product as inactive.`);
+          
+          // Auto-registration: Creates the product so the user sees it in the Products Catalog
+          await supabaseClient.from("products").insert({
+            sku: itemSku,
+            name: line_item.name || "Auto-imported Product",
+            active: false
+          });
+
+          successfullyProcessed = false;
           continue;
         }
 
         // Iterate over recipe rules
-        if (productData.product_packaging_rules && Array.isArray(productData.product_packaging_rules)) {
+        if (productData.product_packaging_rules && Array.isArray(productData.product_packaging_rules) && productData.product_packaging_rules.length > 0) {
           for (const rule of productData.product_packaging_rules) {
             const deductionAmount = purchaseQty * Number(rule.quantity_used);
 
@@ -158,6 +167,9 @@ export async function POST(req: NextRequest) {
                 source_id: String(payload.id || payload.number || itemSku)
               });
           }
+        } else {
+          // The product exists, but has NO recipe rules attached. Mark order as unprocessed!
+          successfullyProcessed = false;
         }
       }
 
