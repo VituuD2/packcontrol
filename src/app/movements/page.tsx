@@ -38,17 +38,17 @@ export default async function MovementsPage() {
     "use server"
     const supabaseServer = await createClient()
     const id = formData.get('id') as string
-    const type = formData.get('type') as string
+    const movement_type = formData.get('movement_type') as string
     const quantity = Number(formData.get('quantity'))
-    const reference = formData.get('reference') as string
+    const source_id = formData.get('source_id') as string
 
     // In a real ERP, editing a movement should also recalculate the current_stock
     // of the packaging_item, which is complex and usually requires a DB function/trigger.
     // For this MVP, we explicitly update the movement record.
     const { error } = await supabaseServer.from('packaging_movements').update({
-      type,
+      movement_type,
       quantity,
-      reference
+      source_id
     }).eq("id", id)
 
     if (!error) revalidatePath('/movements')
@@ -70,9 +70,6 @@ export default async function MovementsPage() {
     <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto">
       <div className="flex flex-col gap-1">
         <h1 className="text-3xl font-bold tracking-tight">Stock Movements Ledger</h1>
-        <p className="text-muted-foreground">
-          Detailed immutable log of all inventory additions and reductions.
-        </p>
       </div>
 
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -90,7 +87,7 @@ export default async function MovementsPage() {
                   <TableHead className="w-[100px] font-semibold text-muted-foreground">Direction</TableHead>
                   <TableHead className="font-semibold text-muted-foreground">Material Item</TableHead>
                   <TableHead className="font-semibold text-muted-foreground">Qty</TableHead>
-                  <TableHead className="font-semibold text-muted-foreground">Source context</TableHead>
+                  <TableHead className="font-semibold text-muted-foreground">Source</TableHead>
                   <TableHead className="font-semibold text-muted-foreground">Reference</TableHead>
                   <TableHead className="text-right font-semibold text-muted-foreground">Date Logged</TableHead>
                   <TableHead className="w-[60px]"></TableHead>
@@ -107,10 +104,12 @@ export default async function MovementsPage() {
                   return (
                     <TableRow key={mov.id} className="group hover:bg-muted/20 transition-colors">
                       <TableCell>
-                        {mov.type === 'Out' ? (
-                           <Badge className="bg-red-50 text-red-700 hover:bg-red-100 border-red-200/50 uppercase tracking-wider text-[10px] shadow-none">Out</Badge>
+                        {mov.movement_type === 'out' ? (
+                           <Badge className="bg-red-50 text-red-700 border-red-200/50 uppercase tracking-wider text-[10px] shadow-none">Out</Badge>
+                        ) : mov.movement_type === 'in' ? (
+                           <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200/50 uppercase tracking-wider text-[10px] shadow-none">In</Badge>
                         ) : (
-                           <Badge className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200/50 uppercase tracking-wider text-[10px] shadow-none">In</Badge>
+                           <Badge className="bg-orange-50 text-orange-700 border-orange-200/50 uppercase tracking-wider text-[10px] shadow-none">Adj</Badge>
                         )}
                       </TableCell>
                       <TableCell className="font-medium">
@@ -118,13 +117,13 @@ export default async function MovementsPage() {
                         <span className="block text-xs font-mono text-muted-foreground/60">{mov.packaging_items?.sku_internal}</span>
                       </TableCell>
                       <TableCell>
-                        <span className={`font-bold tabular-nums tracking-tight ${mov.type === 'Out' ? 'text-red-600' : 'text-emerald-600'}`}>
-                          {mov.type === 'Out' ? '-' : '+'}{mov.quantity}
+                        <span className={`font-bold tabular-nums tracking-tight ${mov.movement_type === 'out' ? 'text-red-600' : 'text-emerald-600'}`}>
+                          {mov.movement_type === 'out' ? '-' : '+'}{mov.quantity}
                         </span>
                         <span className="text-xs text-muted-foreground ml-1">{mov.packaging_items?.unit}</span>
                       </TableCell>
-                      <TableCell className="text-muted-foreground text-sm">{mov.source || "System"}</TableCell>
-                      <TableCell className="text-foreground/80 font-medium text-sm">{mov.reference || "-"}</TableCell>
+                      <TableCell className="text-muted-foreground text-sm uppercase text-xs font-semibold">{mov.source_type || "system"}</TableCell>
+                      <TableCell className="text-foreground/80 font-medium text-sm">{mov.source_id || "-"}</TableCell>
                       <TableCell className="text-right text-sm tabular-nums text-muted-foreground">
                         {formattedDate}
                       </TableCell>
@@ -142,7 +141,6 @@ export default async function MovementsPage() {
             <div className="flex flex-col items-center justify-center p-16 text-center text-muted-foreground/60">
                <History className="h-12 w-12 mb-4 opacity-20" />
                <h3 className="text-lg font-semibold text-foreground/80 tracking-tight">No Movements Found</h3>
-               <p className="text-sm mt-1 max-w-sm">There are no inventory logs to display. New movements will appear here when packaging stock changes.</p>
             </div>
          )}
       </div>

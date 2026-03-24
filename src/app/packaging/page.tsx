@@ -22,7 +22,22 @@ export default async function PackagingPage() {
     const unit = formData.get('unit') as string
     const current_stock = Number(formData.get('current_stock'))
     const minimum_stock = Number(formData.get('minimum_stock'))
-    const image_url = formData.get('image_url') as string
+    let image_url = formData.get('image_url') as string
+    const image_file = formData.get('image_file') as File
+
+    // Handle File Upload to Supabase Storage if present
+    if (image_file && image_file.size > 0) {
+      const fileExt = image_file.name.split('.').pop()
+      const fileName = `packaging-${Date.now()}.${fileExt}`
+      const { data, error } = await supabaseServer.storage.from('images').upload(`packaging/${fileName}`, image_file)
+      
+      if (!error) {
+        const { data: { publicUrl } } = supabaseServer.storage.from('images').getPublicUrl(`packaging/${fileName}`)
+        image_url = publicUrl
+      } else {
+        console.error("Storage upload error:", error)
+      }
+    }
 
     const { error } = await supabaseServer.from('packaging_items').insert({
       name,

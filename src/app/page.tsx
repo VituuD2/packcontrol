@@ -83,7 +83,7 @@ export default async function Dashboard() {
 
   let totalItemsConsumed = 0
   sevenDayMovements.forEach(mov => {
-    if (mov.type === 'Out') {
+    if (mov.movement_type === 'out') {
       const dayName = new Intl.DateTimeFormat('en-US', { weekday: 'short' }).format(new Date(mov.created_at))
       const itemName = mov.packaging_items?.name || "Other"
       chartDataMap[dayName][itemName] = (chartDataMap[dayName][itemName] || 0) + mov.quantity
@@ -98,7 +98,7 @@ export default async function Dashboard() {
   
   // Convert map to array for the chart
   // Only use if there is actual Out data, else empty array
-  const hasOutData = sevenDayMovements.some(m => m.type === 'Out')
+  const hasOutData = sevenDayMovements.some(m => m.movement_type === 'out')
   const chartData = hasOutData ? Object.values(chartDataMap) : []
 
   return (
@@ -190,18 +190,18 @@ export default async function Dashboard() {
                 <div className="flex flex-col gap-1">
                   {recentMovements.map((mov, i) => (
                     <div key={i} className="flex items-center p-3 rounded-xl hover:bg-gray-50 transition-colors">
-                      <div className={`p-2 rounded-xl mr-3 ${mov.type === 'In' ? 'bg-emerald-50 text-emerald-500' : 'bg-rose-50 text-rose-500'}`}>
-                         {mov.type === 'In' ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+                      <div className={`p-2 rounded-xl mr-3 ${mov.movement_type === 'in' ? 'bg-emerald-50 text-emerald-500' : 'bg-rose-50 text-rose-500'}`}>
+                         {mov.movement_type === 'in' ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
                       </div>
-                      <div className="space-y-0.5 flex-1">
-                        <p className="text-[13px] font-bold leading-none text-foreground/80">{mov.packaging_items?.name || "Unknown Item"}</p>
-                        <p className="text-[11px] font-medium text-muted-foreground/60 flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          {new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: 'numeric', hour12: true }).format(new Date(mov.created_at))}
+                      <div className="space-y-0.5 flex-1 w-full overflow-hidden">
+                        <p className="text-[13px] font-bold leading-none text-foreground/80 truncate">{mov.packaging_items?.name || "Unknown Item"}</p>
+                        <p className="text-[11px] font-medium text-muted-foreground/60 flex items-center gap-1 truncate">
+                          <Clock className="w-3 h-3 flex-shrink-0" />
+                          {mov.source_id || "System update"}
                         </p>
                       </div>
-                      <div className={`font-bold text-[14px] ml-auto ${mov.type === 'In' ? 'text-emerald-500' : 'text-rose-500'}`}>
-                        {mov.type === 'In' ? '+' : '-'}{mov.quantity}
+                      <div className={`font-bold text-[14px] ml-auto ${mov.movement_type === 'in' ? 'text-emerald-500' : 'text-rose-500'}`}>
+                        {mov.movement_type === 'in' ? '+' : '-'}{mov.quantity}
                       </div>
                     </div>
                   ))}

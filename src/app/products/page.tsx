@@ -34,7 +34,22 @@ export default async function ProductsPage() {
     const supabaseServer = await createClient()
     const name = formData.get('name') as string
     const sku = formData.get('sku') as string
-    const image_url = formData.get('image_url') as string
+    let image_url = formData.get('image_url') as string
+    const image_file = formData.get('image_file') as File
+
+    // Handle File Upload to Supabase Storage if present
+    if (image_file && image_file.size > 0) {
+      const fileExt = image_file.name.split('.').pop()
+      const fileName = `product-${Date.now()}.${fileExt}`
+      const { data, error } = await supabaseServer.storage.from('images').upload(`products/${fileName}`, image_file)
+      
+      if (!error) {
+        const { data: { publicUrl } } = supabaseServer.storage.from('images').getPublicUrl(`products/${fileName}`)
+        image_url = publicUrl
+      } else {
+        console.error("Storage upload error:", error)
+      }
+    }
 
     const { error } = await supabaseServer.from('products').insert({
       name,
@@ -55,7 +70,19 @@ export default async function ProductsPage() {
     const id = formData.get('id') as string
     const name = formData.get('name') as string
     const sku = formData.get('sku') as string
-    const image_url = formData.get('image_url') as string
+    let image_url = formData.get('image_url') as string
+    const image_file = formData.get('image_file') as File
+
+    if (image_file && image_file.size > 0) {
+      const fileExt = image_file.name.split('.').pop()
+      const fileName = `product-${Date.now()}.${fileExt}`
+      const { data, error } = await supabaseServer.storage.from('images').upload(`products/${fileName}`, image_file)
+      
+      if (!error) {
+        const { data: { publicUrl } } = supabaseServer.storage.from('images').getPublicUrl(`products/${fileName}`)
+        image_url = publicUrl
+      }
+    }
 
     const { error } = await supabaseServer.from('products').update({
       name,

@@ -66,8 +66,14 @@ export function EditProductDialog({
               <Input id="sku" name="sku" defaultValue={product.sku} required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="image_url">Photo URL (Optional)</Label>
-              <Input id="image_url" name="image_url" type="url" defaultValue={product.image_url || ""} />
+              <Label>Product Image</Label>
+              <div className="flex flex-col gap-2">
+                <Input id="image_file" name="image_file" type="file" accept="image/*" className="text-muted-foreground file:text-foreground file:bg-muted file:border-0 file:rounded-md file:mr-4 file:px-4 file:py-1 cursor-pointer" />
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold text-muted-foreground/50 mx-1">OR</span>
+                  <Input id="image_url" name="image_url" defaultValue={product.image_url || ""} placeholder="Paste image URL..." type="url" className="flex-1" />
+                </div>
+              </div>
             </div>
           </div>
           <div className="flex justify-end gap-3 pb-2">

@@ -52,7 +52,7 @@ export function EditMovementDialog({
     formData.append("id", movement.id)
     formData.append("packaging_item_id", movement.packaging_item_id)
     formData.append("quantity", movement.quantity)
-    formData.append("type", movement.type)
+    formData.append("movement_type", movement.movement_type)
     
     try {
       await deleteAction(formData)
@@ -75,7 +75,7 @@ export function EditMovementDialog({
           <DialogHeader className="mb-4">
             <DialogTitle>Edit Movement</DialogTitle>
             <DialogDescription>
-              Adjust quantity or reference. In strict ERPs, prefer creating a reversal entry instead of hard-editing.
+              Adjust quantity or reference.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-5 py-4">
@@ -84,12 +84,13 @@ export function EditMovementDialog({
                 <Label htmlFor="type">Direction</Label>
                 <select 
                   id="type" 
-                  name="type" 
-                  defaultValue={movement.type}
+                  name="movement_type" 
+                  defaultValue={movement.movement_type}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 >
-                  <option value="In">In (+)</option>
-                  <option value="Out">Out (-)</option>
+                  <option value="in">In (+)</option>
+                  <option value="out">Out (-)</option>
+                  <option value="adjustment">Adj</option>
                 </select>
               </div>
               <div className="space-y-2">
@@ -99,7 +100,7 @@ export function EditMovementDialog({
             </div>
             <div className="space-y-2">
               <Label htmlFor="reference">Reference / Order ID</Label>
-              <Input id="reference" name="reference" defaultValue={movement.reference || ""} />
+              <Input id="reference" name="source_id" defaultValue={movement.source_id || ""} />
             </div>
           </div>
           <div className="flex justify-between items-center mt-4 pt-4 border-t">
