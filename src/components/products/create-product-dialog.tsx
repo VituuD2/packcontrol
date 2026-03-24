@@ -51,9 +51,6 @@ export function CreateProductDialog({ addAction }: { addAction: (formData: FormD
                  <div className="p-2 bg-zinc-100 text-zinc-900 rounded-xl inline-flex"><Box className="w-5 h-5" /></div>
                  New Product Identity
               </DialogTitle>
-              <p className="text-[13px] text-muted-foreground/80 mt-2">
-                Register a new sellable item. The SKU must exactly match the WooCommerce product SKU to enable automatic sync.
-              </p>
             </DialogHeader>
           </div>
 
@@ -95,7 +92,7 @@ export function CreateProductDialog({ addAction }: { addAction: (formData: FormD
                       <Upload className="h-4 w-4" />
                    </div>
                    <div className="flex-1">
-                      <Input id="image_file" name="image_file" type="file" accept="image/*" className="h-9 px-0 py-1.5 border-0 bg-transparent text-sm file:bg-gray-100 file:text-foreground file:font-semibold file:text-xs file:border-0 file:rounded-md file:px-3 file:py-1 file:mr-3 hover:file:bg-gray-200 transition-colors cursor-pointer" />
+                      <Input id="image_file" name="image_file" type="file" accept="image/*" className="h-9 px-0 py-1.5 border-0 bg-transparent text-sm file:bg-gray-100 file:text-foreground file:font-semibold file:text-xs file:border-0 file:rounded-md file:px-3 file:py-1 file:mr-3 hover:file:bg-gray-200 transition-colors file:cursor-pointer cursor-pointer" />
                    </div>
                 </div>
                 

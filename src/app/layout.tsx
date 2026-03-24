@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { Toaster } from "@/components/ui/sonner"
+import { I18nProvider } from "@/lib/i18n/context";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -35,18 +36,19 @@ export default function RootLayout({
             enableSystem={false}
             disableTransitionOnChange
         >
-          <div className="flex h-screen w-full bg-muted/20">
-            <Sidebar />
-            <div className="flex flex-col flex-1 h-screen overflow-hidden">
-              <Header />
-              <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8">
-                {children}
-              </main>
+          <I18nProvider>
+            <div className="flex h-screen w-full bg-muted/20">
+              <Sidebar />
+              <div className="flex flex-col flex-1 h-screen overflow-hidden">
+                <Header />
+                <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8">
+                  {children}
+                </main>
+              </div>
             </div>
-          </div>
-          <Toaster />
+            <Toaster />
+          </I18nProvider>
         </ThemeProvider>
-
       </body>
     </html>
   );

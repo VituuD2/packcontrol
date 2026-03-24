@@ -3,12 +3,14 @@ import { Package, RefreshCw, AlertTriangle, TrendingUp, TrendingDown, History, B
 import { ConsumptionChart } from "@/components/dashboard/consumption-chart"
 import { ForceSyncButton } from "@/components/dashboard/force-sync-button"
 import { createClient } from "@/lib/supabase/server"
+import { getTranslation } from "@/lib/i18n/server"
 import Link from "next/link"
 
 export const dynamic = "force-dynamic"
 
 export default async function Dashboard() {
   const supabase = await createClient()
+  const t = await getTranslation()
 
   // Define today start and end in UTC to fetch metrics
   const todayStart = new Date()
@@ -114,7 +116,7 @@ export default async function Dashboard() {
   return (
     <div className="flex flex-col gap-8 w-full max-w-[1400px] mx-auto p-2">
       <div className="flex items-center justify-between">
-         <h1 className="text-2xl font-bold tracking-tight text-foreground/90">Overview</h1>
+         <h1 className="text-2xl font-bold tracking-tight text-foreground/90">{t('dashboard.title')}</h1>
          <ForceSyncButton />
       </div>
 
@@ -122,7 +124,7 @@ export default async function Dashboard() {
         <Link href="/orders" className="block outline-none ring-0">
           <Card className="rounded-[1.25rem] border-0 shadow-[0_2px_20px_rgb(0,0,0,0.04)] bg-white p-2 flex flex-col h-full hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all cursor-pointer">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-5 pt-5">
-              <span className="text-[13px] font-semibold text-muted-foreground tracking-wide">ORDERS</span>
+              <span className="text-[13px] font-semibold text-muted-foreground tracking-wide uppercase">{t('dashboard.orders')}</span>
               <div className="p-2 bg-blue-50 text-blue-500 rounded-xl"><RefreshCw className="h-4 w-4" /></div>
             </CardHeader>
             <CardContent className="px-5 pb-5 mt-auto">
@@ -142,7 +144,7 @@ export default async function Dashboard() {
         <Link href="/movements" className="block outline-none ring-0">
           <Card className="rounded-[1.25rem] border-0 shadow-[0_2px_20px_rgb(0,0,0,0.04)] bg-white p-2 flex flex-col h-full hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all cursor-pointer">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-5 pt-5">
-              <span className="text-[13px] font-semibold text-muted-foreground tracking-wide">CONSUMPTION</span>
+              <span className="text-[13px] font-semibold text-muted-foreground tracking-wide uppercase">{t('dashboard.consumption')}</span>
               <div className="p-2 bg-indigo-50 text-indigo-500 rounded-xl"><Package className="h-4 w-4" /></div>
             </CardHeader>
             <CardContent className="px-5 pb-5 mt-auto">
@@ -156,7 +158,7 @@ export default async function Dashboard() {
         <Link href="/packaging" className="block outline-none ring-0">
           <Card className="rounded-[1.25rem] border-0 shadow-[0_2px_20px_rgb(0,0,0,0.04)] bg-white p-2 flex flex-col h-full hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all cursor-pointer">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-5 pt-5">
-              <span className="text-[13px] font-semibold text-muted-foreground tracking-wide">ALERTS</span>
+              <span className="text-[13px] font-semibold text-muted-foreground tracking-wide uppercase">{t('dashboard.alerts')}</span>
               <div className={`p-2 rounded-xl ${lowStockCount > 0 ? "bg-rose-50 text-rose-500" : "bg-emerald-50 text-emerald-500"}`}>
                  {lowStockCount > 0 ? <AlertTriangle className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
               </div>
@@ -172,7 +174,7 @@ export default async function Dashboard() {
         <Link href="/orders?filter=pending" className="block outline-none ring-0">
           <Card className="rounded-[1.25rem] border-0 shadow-[0_2px_20px_rgb(0,0,0,0.04)] bg-white p-2 flex flex-col h-full hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all cursor-pointer">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-5 pt-5">
-              <span className="text-[13px] font-semibold text-muted-foreground tracking-wide">PENDING SYNC</span>
+              <span className="text-[13px] font-semibold text-muted-foreground tracking-wide uppercase">{t('dashboard.pending_sync')}</span>
               <div className={`p-2 rounded-xl ${unprocessedOrdersCount > 0 ? "bg-amber-50 text-amber-500" : "bg-emerald-50 text-emerald-500"}`}>
                  {unprocessedOrdersCount > 0 ? <AlertTriangle className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
               </div>
@@ -181,7 +183,7 @@ export default async function Dashboard() {
               <div className="flex items-end gap-3">
                 <span className={`text-4xl font-extrabold tracking-tighter ${unprocessedOrdersCount > 0 ? "text-amber-500" : "text-emerald-500"}`}>{unprocessedOrdersCount}</span>
               </div>
-              {unprocessedOrdersCount > 0 && <span className="text-xs font-semibold text-amber-500 mt-1 block">Orders missing SKUs/Recipes</span>}
+              {unprocessedOrdersCount > 0 && <span className="text-xs font-semibold text-amber-500 mt-1 block">{t('dashboard.orders_missing')}</span>}
             </CardContent>
           </Card>
         </Link>

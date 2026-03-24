@@ -52,10 +52,10 @@ export function EditProductDialog({
           
           <div className="px-8 pt-8 pb-4">
             <DialogHeader>
-              <DialogTitle className="text-xl font-bold tracking-tight text-foreground/90">Edit Product Profile</DialogTitle>
-              <p className="text-[13px] text-muted-foreground/80 mt-1">
-                Refine the product data that matches your WooCommerce catalog.
-              </p>
+              <DialogTitle className="text-xl font-bold tracking-tight text-foreground/90 flex items-center gap-2">
+                 <div className="p-2 bg-indigo-50 text-indigo-500 rounded-xl inline-flex"><Pencil className="w-5 h-5" /></div>
+                 Edit Product Identity
+              </DialogTitle>
             </DialogHeader>
           </div>
 
@@ -64,7 +64,6 @@ export function EditProductDialog({
             <div className="flex items-center justify-between p-4 rounded-xl border border-gray-100/80 bg-white shadow-sm">
                <div className="space-y-0.5">
                   <Label className="text-[14px] font-semibold text-foreground/90">Active Status</Label>
-                  <p className="text-[11px] text-muted-foreground">Inactive products will be ignored during synchronization.</p>
                </div>
                <label className="relative inline-flex items-center cursor-pointer">
                  <input type="checkbox" name="active" defaultChecked={product.active !== false} className="sr-only peer" />
@@ -109,7 +108,7 @@ export function EditProductDialog({
                       <Upload className="h-4 w-4" />
                    </div>
                    <div className="flex-1">
-                      <Input id="image_file" name="image_file" type="file" accept="image/*" className="h-9 px-0 py-1.5 border-0 bg-transparent text-sm file:bg-gray-100 file:text-foreground file:font-semibold file:text-xs file:border-0 file:rounded-md file:px-3 file:py-1 file:mr-3 hover:file:bg-gray-200 transition-colors cursor-pointer" />
+                      <Input id="image_file" name="image_file" type="file" accept="image/*" className="h-9 px-0 py-1.5 border-0 bg-transparent text-sm file:bg-gray-100 file:text-foreground file:font-semibold file:text-xs file:border-0 file:rounded-md file:px-3 file:py-1 file:mr-3 hover:file:bg-gray-200 transition-colors file:cursor-pointer cursor-pointer" />
                    </div>
                 </div>
                 

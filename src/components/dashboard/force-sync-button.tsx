@@ -4,11 +4,13 @@ import { useState } from "react"
 import { RefreshCw, CheckCircle2, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
+import { useI18n } from "@/lib/i18n/context"
 
 export function ForceSyncButton() {
   const [loading, setLoading] = useState(false)
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle")
   const router = useRouter()
+  const { t } = useI18n()
 
   async function handleSync() {
     setLoading(true)
@@ -59,7 +61,7 @@ export function ForceSyncButton() {
       ) : (
         <RefreshCw className="h-4 w-4" />
       )}
-      {loading ? "Syncing..." : status === "success" ? "Synced" : status === "error" ? "Failed" : "Force Sync"}
+      {loading ? t('dashboard.syncing') : status === "success" ? "Synced" : status === "error" ? "Failed" : t('dashboard.force_sync')}
     </Button>
   )
 }

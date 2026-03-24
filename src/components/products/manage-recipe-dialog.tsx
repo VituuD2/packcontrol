@@ -12,6 +12,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { useRouter } from "next/navigation"
 
 export function ManageRecipeDialog({ 
@@ -61,9 +68,6 @@ export function ManageRecipeDialog({
                 <div className="p-2 bg-emerald-50 text-emerald-500 rounded-xl inline-flex"><PackagePlus className="w-5 h-5" /></div>
                 Build Component Tree
               </DialogTitle>
-              <p className="text-[13px] text-muted-foreground/80 mt-2 leading-relaxed">
-                Construct the BOM (Bill of Materials) for <span className="font-semibold text-foreground">{product.name}</span>. Defining which packaging components are automatically consumed upon sale.
-              </p>
             </DialogHeader>
           </div>
 
@@ -71,23 +75,19 @@ export function ManageRecipeDialog({
             <div className="space-y-1.5">
               <Label htmlFor="packaging_id" className="text-xs font-bold text-muted-foreground uppercase tracking-wider ml-1">Packaging Component</Label>
               <div className="relative">
-                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none z-10">
                    <Box className="h-4 w-4 text-muted-foreground/40" />
                  </div>
-                 <select 
-                  id="packaging_id" 
-                  name="packaging_id" 
-                  className="flex h-12 w-full pl-10 pr-4 appearance-none rounded-xl border border-gray-200/60 bg-white shadow-sm text-[14px] font-medium text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/20 focus-visible:border-indigo-500 transition-colors"
-                  required
-                 >
-                  <option value="" disabled selected className="text-muted-foreground">Select a component from your index...</option>
-                  {packagingItems.map((pkg) => (
-                    <option key={pkg.id} value={pkg.id}>{pkg.name} — [{pkg.sku_internal}]</option>
-                  ))}
-                 </select>
-                 <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none">
-                   <Code className="h-4 w-4 text-muted-foreground/40 rotate-90" />
-                 </div>
+                 <Select name="packaging_id" required>
+                   <SelectTrigger className="flex h-12 w-full pl-10 pr-4 rounded-xl border-gray-200/60 bg-white shadow-sm text-[14px] font-medium text-foreground focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors">
+                     <SelectValue placeholder="Select a component..." />
+                   </SelectTrigger>
+                   <SelectContent>
+                     {packagingItems.map((pkg) => (
+                       <SelectItem key={pkg.id} value={pkg.id} className="cursor-pointer">{pkg.name} — [{pkg.sku_internal}]</SelectItem>
+                     ))}
+                   </SelectContent>
+                 </Select>
               </div>
             </div>
 
