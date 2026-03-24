@@ -77,8 +77,9 @@ export default async function Dashboard() {
       .gte('created_at', sevenDaysAgo.toISOString())
       
     if (movements) {
-      recentMovements = movements.slice(0, 5)
-      sevenDayMovements = movements
+      const normalizedMovements = movements.map(m => ({ ...m, movement_type: m.movement_type?.toLowerCase() || '' }))
+      recentMovements = normalizedMovements.slice(0, 5)
+      sevenDayMovements = normalizedMovements
     }
   } catch (e) {
     // Silent fail if table not exist yet in local setup
