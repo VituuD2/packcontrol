@@ -70,6 +70,7 @@ export default async function ProductsPage() {
     const id = formData.get('id') as string
     const name = formData.get('name') as string
     const sku = formData.get('sku') as string
+    const active = formData.get('active') === 'on'
     let image_url = formData.get('image_url') as string
     const image_file = formData.get('image_file') as File
 
@@ -87,6 +88,7 @@ export default async function ProductsPage() {
     const { error } = await supabaseServer.from('products').update({
       name,
       sku,
+      active,
       image_url: image_url || null
     }).eq("id", id)
 

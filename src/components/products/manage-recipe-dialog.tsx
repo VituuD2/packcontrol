@@ -1,14 +1,13 @@
 "use client"
 
 import { useState } from "react"
-import { PackagePlus } from "lucide-react"
+import { PackagePlus, Code, Box } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -47,40 +46,73 @@ export function ManageRecipeDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button variant="secondary" size="sm" className="h-8 gap-1 cursor-pointer" />}>
+      <DialogTrigger render={
+        <Button variant="secondary" size="sm" className="h-8 gap-1.5 cursor-pointer bg-emerald-50 text-emerald-600 hover:bg-emerald-100/80 hover:text-emerald-700 shadow-none px-3 font-bold border border-emerald-100/40" />
+      }>
         <PackagePlus className="w-3.5 h-3.5" /> Recipe
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px] overflow-hidden rounded-2xl">
-        <form onSubmit={handleSubmit}>
-          <DialogHeader>
-            <DialogTitle>Attach Packaging</DialogTitle>
-            <DialogDescription>
-              Select a packaging material consumed by this product. This will ADD to the recipe.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-5 py-6">
-            <div className="space-y-2">
-              <Label htmlFor="packaging_id">Packaging Item</Label>
-              <select 
-                id="packaging_id" 
-                name="packaging_id" 
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                required
-              >
-                <option value="">Select an item...</option>
-                {packagingItems.map((pkg) => (
-                  <option key={pkg.id} value={pkg.id}>{pkg.name} ({pkg.sku_internal})</option>
-                ))}
-              </select>
+      
+      <DialogContent className="sm:max-w-[460px] p-0 border-0 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] rounded-[1.5rem] overflow-hidden bg-white">
+        <form onSubmit={handleSubmit} className="flex flex-col">
+          
+          <div className="px-8 pt-8 pb-4">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold tracking-tight text-foreground/90 flex items-center gap-2">
+                <div className="p-2 bg-emerald-50 text-emerald-500 rounded-xl inline-flex"><PackagePlus className="w-5 h-5" /></div>
+                Build Component Tree
+              </DialogTitle>
+              <p className="text-[13px] text-muted-foreground/80 mt-2 leading-relaxed">
+                Construct the BOM (Bill of Materials) for <span className="font-semibold text-foreground">{product.name}</span>. Defining which packaging components are automatically consumed upon sale.
+              </p>
+            </DialogHeader>
+          </div>
+
+          <div className="px-8 py-6 space-y-6 bg-gray-50/30">
+            <div className="space-y-1.5">
+              <Label htmlFor="packaging_id" className="text-xs font-bold text-muted-foreground uppercase tracking-wider ml-1">Packaging Component</Label>
+              <div className="relative">
+                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                   <Box className="h-4 w-4 text-muted-foreground/40" />
+                 </div>
+                 <select 
+                  id="packaging_id" 
+                  name="packaging_id" 
+                  className="flex h-12 w-full pl-10 pr-4 appearance-none rounded-xl border border-gray-200/60 bg-white shadow-sm text-[14px] font-medium text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/20 focus-visible:border-indigo-500 transition-colors"
+                  required
+                 >
+                  <option value="" disabled selected className="text-muted-foreground">Select a component from your index...</option>
+                  {packagingItems.map((pkg) => (
+                    <option key={pkg.id} value={pkg.id}>{pkg.name} — [{pkg.sku_internal}]</option>
+                  ))}
+                 </select>
+                 <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none">
+                   <Code className="h-4 w-4 text-muted-foreground/40 rotate-90" />
+                 </div>
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="quantity">Quantity Used</Label>
-              <Input id="quantity" name="quantity" type="number" min="1" step="1" defaultValue="1" required />
+
+            <div className="space-y-1.5 w-1/2">
+              <Label htmlFor="quantity" className="text-xs font-bold text-muted-foreground uppercase tracking-wider ml-1">Units Consumed</Label>
+              <div className="relative">
+                <Input 
+                  id="quantity" 
+                  name="quantity" 
+                  type="number" 
+                  min="1" 
+                  step="1" 
+                  defaultValue="1" 
+                  required 
+                  className="h-12 bg-white border-gray-200/60 focus-visible:ring-indigo-500/20 focus-visible:border-indigo-500 rounded-xl px-4 text-[16px] shadow-sm font-bold tracking-tight text-center"
+                />
+              </div>
             </div>
           </div>
-          <div className="flex justify-end gap-3 pb-2">
-             <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-             <Button type="submit" disabled={loading}>{loading ? "Saving..." : "Add to Recipe"}</Button>
+
+          <div className="px-8 py-5 border-t border-gray-100 bg-white flex items-center justify-between rounded-b-[1.5rem]">
+             <Button type="button" variant="ghost" onClick={() => setOpen(false)} className="h-10 px-5 rounded-xl font-semibold text-muted-foreground hover:bg-gray-100">Cancel</Button>
+             <Button type="submit" disabled={loading} className="h-10 px-6 rounded-xl font-semibold bg-zinc-900 hover:bg-zinc-800 text-white shadow-[0_4px_14px_0_rgba(0,0,0,0.2)] transition-all">
+               {loading ? "Injecting..." : "Inject to Recipe"}
+             </Button>
           </div>
         </form>
       </DialogContent>
