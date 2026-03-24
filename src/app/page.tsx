@@ -19,27 +19,15 @@ export default async function Dashboard() {
   const yesterdayStart = new Date(todayStart)
   yesterdayStart.setDate(yesterdayStart.getDate() - 1)
 
-  // Fetch Orders Today
-  const { count: ordersToday } = await supabase
+  // Fetch All-time Orders Processed
+  const { count: totalOrders } = await supabase
     .from('webhook_events')
     .select('*', { count: 'exact', head: true })
-    .gte('created_at', todayStart.toISOString())
     .eq('event_type', 'order.created')
-    .not('external_id', 'is', null)
+    .eq('processed', true)
 
-  const { count: ordersYesterday } = await supabase
-    .from('webhook_events')
-    .select('*', { count: 'exact', head: true })
-    .gte('created_at', yesterdayStart.toISOString())
-    .lt('created_at', todayStart.toISOString())
-    .eq('event_type', 'order.created')
-    .not('external_id', 'is', null)
-
-  const todayCount = ordersToday || 0
-  const yestCount = ordersYesterday || 0
-  let orderTrend = 0
-  if (yestCount > 0) orderTrend = Math.round(((todayCount - yestCount) / yestCount) * 100)
-  else if (todayCount > 0) orderTrend = 100
+  const todayCount = totalOrders || 0
+  const orderTrend = 0 // Trend Disabled for All-Time count
 
   // Fetch Unprocessed Orders
   const { count: unprocessedCount } = await supabase

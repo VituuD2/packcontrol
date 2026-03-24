@@ -5,11 +5,13 @@ import { Badge } from "@/components/ui/badge"
 import { CreateProductDialog } from "@/components/products/create-product-dialog"
 import { EditProductDialog } from "@/components/products/edit-product-dialog"
 import { ManageRecipeDialog } from "@/components/products/manage-recipe-dialog"
+import { getTranslation } from "@/lib/i18n/server"
 
 export const dynamic = "force-dynamic"
 
 export default async function ProductsPage() {
   const supabase = await createClient()
+  const t = await getTranslation()
 
   // Fetch products and their packaging rules
   const { data: products, error } = await supabase
@@ -122,7 +124,7 @@ export default async function ProductsPage() {
   return (
     <div className="flex flex-col gap-6 w-full max-w-[1400px] mx-auto p-2">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground/90">Products Catalog</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground/90">{t('products.title')}</h1>
         <CreateProductDialog addAction={addProduct} />
       </div>
 
@@ -146,9 +148,9 @@ export default async function ProductsPage() {
                   <div className="flex items-center gap-2 mb-1">
                     <h3 className="font-semibold text-[15px] truncate text-foreground/90">{product.name}</h3>
                     {product.active ? (
-                      <Badge className="bg-emerald-50 text-emerald-600 border-0 h-5 px-1.5 text-[10px] uppercase font-bold tracking-wider rounded-md">Active</Badge>
+                      <Badge className="bg-emerald-50 text-emerald-600 border-0 h-5 px-1.5 text-[10px] uppercase font-bold tracking-wider rounded-md">{t('products.active')}</Badge>
                     ) : (
-                      <Badge className="bg-gray-100 text-gray-500 border-0 h-5 px-1.5 text-[10px] uppercase font-bold tracking-wider rounded-md">Inactive</Badge>
+                      <Badge className="bg-gray-100 text-gray-500 border-0 h-5 px-1.5 text-[10px] uppercase font-bold tracking-wider rounded-md">{t('products.inactive')}</Badge>
                     )}
                   </div>
                   <span className="text-xs font-medium font-mono text-muted-foreground bg-gray-50 px-1.5 py-0.5 rounded-md self-start border border-gray-100/50">{product.sku}</span>
@@ -156,7 +158,7 @@ export default async function ProductsPage() {
 
                 {/* Recipe Overview */}
                 <div className="flex-1 min-w-[200px] hidden md:flex flex-col justify-center border-l border-gray-100 pl-6 space-y-1">
-                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Recipe</span>
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{t('products.recipe')}</span>
                   {product.product_packaging_rules && product.product_packaging_rules.length > 0 ? (
                     <div className="flex flex-wrap gap-1">
                       {product.product_packaging_rules.map((rule: any, idx: number) => (
@@ -167,7 +169,7 @@ export default async function ProductsPage() {
                     </div>
                   ) : (
                     <span className="text-[11px] font-medium text-muted-foreground/50 flex items-center gap-1">
-                      <PackagePlus className="w-3 h-3" /> No recipe defined
+                      <PackagePlus className="w-3 h-3" /> {t('products.no_recipe')}
                     </span>
                   )}
                 </div>
@@ -183,7 +185,7 @@ export default async function ProductsPage() {
         ) : (
           <div className="p-16 flex flex-col items-center justify-center text-center">
             <Box className="h-10 w-10 text-muted-foreground/20 mb-4" />
-            <h2 className="text-[15px] font-semibold text-foreground/80 tracking-tight">No products found</h2>
+            <h2 className="text-[15px] font-semibold text-foreground/80 tracking-tight">{t('products.no_products')}</h2>
           </div>
         )}
       </div>

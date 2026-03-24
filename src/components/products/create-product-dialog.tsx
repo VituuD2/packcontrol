@@ -13,11 +13,13 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { useRouter } from "next/navigation"
+import { useI18n } from "@/lib/i18n/context"
 
 export function CreateProductDialog({ addAction }: { addAction: (formData: FormData) => Promise<any> }) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const { t } = useI18n()
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -40,7 +42,7 @@ export function CreateProductDialog({ addAction }: { addAction: (formData: FormD
       <DialogTrigger render={
         <Button className="cursor-pointer h-10 px-4 gap-2 bg-zinc-900 border-0 rounded-xl font-semibold shadow-sm hover:bg-zinc-800 transition-all text-white" />
       }>
-        <Plus className="w-4 h-4" /> Add Product
+        <Plus className="w-4 h-4" /> {t('products.add')}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[480px] p-0 border-0 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] rounded-[1.5rem] overflow-hidden bg-white">
         <form onSubmit={handleSubmit} className="flex flex-col">

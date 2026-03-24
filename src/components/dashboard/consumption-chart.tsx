@@ -14,8 +14,14 @@ export function ConsumptionChart({ data }: { data: any[] }) {
     )
   }
 
-  // Auto-detect keys (which will be dynamic based on the packaging items used)
-  const keys = Object.keys(data[0] || {}).filter(k => k !== 'name')
+  // Collect unique keys from all data objects (excluding 'name')
+  const keysSet = new Set<string>()
+  data.forEach(d => {
+    Object.keys(d).forEach(k => {
+      if (k !== 'name') keysSet.add(k)
+    })
+  })
+  const keys = Array.from(keysSet)
   
   // Define a set of pleasing SaaS colors for the lines
   const colors = ["#4f46e5", "#10b981", "#f59e0b", "#ec4899", "#8b5cf6", "#14b8a6"]

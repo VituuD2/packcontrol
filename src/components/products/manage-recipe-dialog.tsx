@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useRouter } from "next/navigation"
+import { useI18n } from "@/lib/i18n/context"
 
 export function ManageRecipeDialog({ 
   product, 
@@ -33,6 +34,7 @@ export function ManageRecipeDialog({
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const { t } = useI18n()
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -56,7 +58,7 @@ export function ManageRecipeDialog({
       <DialogTrigger render={
         <Button variant="secondary" size="sm" className="h-8 gap-1.5 cursor-pointer bg-emerald-50 text-emerald-600 hover:bg-emerald-100/80 hover:text-emerald-700 shadow-none px-3 font-bold border border-emerald-100/40" />
       }>
-        <PackagePlus className="w-3.5 h-3.5" /> Recipe
+        <PackagePlus className="w-3.5 h-3.5" /> {t('products.recipe')}
       </DialogTrigger>
       
       <DialogContent className="sm:max-w-[460px] p-0 border-0 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] rounded-[1.5rem] overflow-hidden bg-white">

@@ -4,11 +4,13 @@ import { revalidatePath } from "next/cache"
 import { Badge } from "@/components/ui/badge"
 import { CreatePackagingDialog } from "@/components/packaging/create-packaging-dialog"
 import { EditPackagingDialog } from "@/components/packaging/edit-packaging-dialog"
+import { getTranslation } from "@/lib/i18n/server"
 
 export const dynamic = "force-dynamic"
 
 export default async function PackagingPage() {
   const supabase = await createClient()
+  const t = await getTranslation()
 
   const { data: packagingItems, error } = await supabase
     .from('packaging_items')
@@ -98,7 +100,7 @@ export default async function PackagingPage() {
   return (
     <div className="flex flex-col gap-6 w-full max-w-[1400px] mx-auto p-2">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground/90">Packaging Inventory</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground/90">{t('packaging.title')}</h1>
         <CreatePackagingDialog addAction={addPackaging} />
       </div>
 
@@ -128,7 +130,7 @@ export default async function PackagingPage() {
                 {/* Stock Details */}
                 <div className="flex items-center justify-between gap-8 md:gap-12 px-6 sm:border-l border-gray-100">
                   <div className="flex flex-col items-center">
-                    <span className="text-[10px] uppercase font-bold text-muted-foreground/60 tracking-wider mb-0.5">Current</span>
+                    <span className="text-[10px] uppercase font-bold text-muted-foreground/60 tracking-wider mb-0.5">{t('packaging.stock')}</span>
                     <div className="flex items-baseline gap-1.5">
                       <span className="text-xl font-bold tracking-tight text-foreground/90">{item.current_stock}</span>
                       <span className="text-xs font-medium text-muted-foreground">{item.unit}</span>
@@ -136,7 +138,7 @@ export default async function PackagingPage() {
                   </div>
                   
                   <div className="flex flex-col items-center">
-                    <span className="text-[10px] uppercase font-bold text-muted-foreground/60 tracking-wider mb-0.5">Minimum</span>
+                    <span className="text-[10px] uppercase font-bold text-muted-foreground/60 tracking-wider mb-0.5">{t('packaging.min_stock')}</span>
                     <span className="text-base font-semibold text-foreground/70">{item.minimum_stock}</span>
                   </div>
 
@@ -159,7 +161,7 @@ export default async function PackagingPage() {
         ) : (
           <div className="p-16 flex flex-col items-center justify-center text-center">
             <Package className="h-10 w-10 text-muted-foreground/20 mb-4" />
-            <h2 className="text-[15px] font-semibold text-foreground/80 tracking-tight">No packaging items found</h2>
+            <h2 className="text-[15px] font-semibold text-foreground/80 tracking-tight">{t('packaging.no_materials')}</h2>
           </div>
         )}
       </div>

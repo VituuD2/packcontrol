@@ -19,7 +19,48 @@ export const ptBR = {
     items_deducted: "Itens Deduzidos",
     force_sync: "Forçar Sincronização",
     syncing: "Sincronizando...",
-    force_sync_desc: "Tentar reprocessar todas as vendas estagnadas."
+    force_sync_desc: "Tentar reprocessar todas as vendas estagnadas.",
+    market_stats: "Estatísticas de Consumo",
+    history: "Histórico Recente",
+    no_history: "Nenhuma transação recente",
+    unknown_item: "Item Desconhecido",
+    system_update: "Atualização de sistema"
+  },
+  products: {
+    title: "Catálogo de Produtos",
+    add: "Adicionar Produto",
+    edit: "Editar",
+    recipe: "Receita",
+    active: "Ativo",
+    inactive: "Inativo",
+    no_products: "Nenhum produto encontrado",
+    no_recipe: "Nenhuma receita definida"
+  },
+  movements: {
+    title: "Movimentações de Estoque",
+    add: "Adicionar Movimentação",
+    type: "Tipo",
+    date: "Data",
+    item: "Item",
+    quantity: "Quantidade",
+    source: "Origem",
+    actions: "Ações",
+    in: "ENTRADA",
+    out: "SAÍDA",
+    no_data: "Nenhuma movimentação",
+    system: "Sistema"
+  },
+  packaging: {
+    title: "Materiais de Embalagem",
+    add: "Adicionar Material",
+    stock: "Estoque Atual",
+    min_stock: "Mínimo Saudável",
+    unit: "Unidade",
+    edit: "Editar",
+    no_materials: "Nenhum material encontrado"
+  },
+  days: {
+    Mon: "Seg", Tue: "Ter", Wed: "Qua", Thu: "Qui", Fri: "Sex", Sat: "Sáb", Sun: "Dom"
   },
   settings: {
     title: "Configurações Globais",
@@ -43,7 +84,7 @@ export const enUS = {
     title: "System Overview",
     pending_sync: "Pending Sync",
     orders_missing: "Orders missing SKUs/Recipes",
-    alerts: "Alertas",
+    alerts: "Alerts",
     low_stock: "Low Stock Items",
     orders: "Synced Orders",
     orders_processed: "Total Processed",
@@ -51,7 +92,48 @@ export const enUS = {
     items_deducted: "Items Deducted",
     force_sync: "Force Sync",
     syncing: "Syncing...",
-    force_sync_desc: "Attempt to process all stalled webhook events."
+    force_sync_desc: "Attempt to process all stalled webhook events.",
+    market_stats: "Market Statistics",
+    history: "History",
+    no_history: "No recent transactions",
+    unknown_item: "Unknown Item",
+    system_update: "System update"
+  },
+  products: {
+    title: "Products Catalog",
+    add: "Add Product",
+    edit: "Edit",
+    recipe: "Recipe",
+    active: "Active",
+    inactive: "Inactive",
+    no_products: "No products found",
+    no_recipe: "No recipe defined"
+  },
+  movements: {
+    title: "Inventory Movements",
+    add: "Add Movement",
+    type: "Type",
+    date: "Date",
+    item: "Item",
+    quantity: "Quantity",
+    source: "Source",
+    actions: "Actions",
+    in: "IN",
+    out: "OUT",
+    no_data: "No movements found",
+    system: "System"
+  },
+  packaging: {
+    title: "Packaging Materials",
+    add: "Add Material",
+    stock: "Current Stock",
+    min_stock: "Healthy Minimum",
+    unit: "Unit",
+    edit: "Edit",
+    no_materials: "No materials found"
+  },
+  days: {
+    Mon: "Mon", Tue: "Tue", Wed: "Wed", Thu: "Thu", Fri: "Fri", Sat: "Sat", Sun: "Sun"
   },
   settings: {
     title: "Global Settings",

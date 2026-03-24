@@ -13,6 +13,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { useRouter } from "next/navigation"
+import { useI18n } from "@/lib/i18n/context"
 
 export function EditProductDialog({ 
   product, 
@@ -24,6 +25,7 @@ export function EditProductDialog({
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const { t } = useI18n()
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -45,7 +47,7 @@ export function EditProductDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger render={<Button variant="outline" size="sm" className="h-8 gap-1 cursor-pointer bg-white border-gray-200/60 shadow-sm hover:bg-gray-50/50" />}>
-        <Pencil className="w-3.5 h-3.5 text-indigo-500" /> Edit
+        <Pencil className="w-3.5 h-3.5 text-indigo-500" /> {t('products.edit')}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[480px] p-0 border-0 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] rounded-[1.5rem] overflow-hidden bg-white">
         <form onSubmit={handleSubmit} className="flex flex-col">
@@ -63,7 +65,7 @@ export function EditProductDialog({
             {/* Status Toggle */}
             <div className="flex items-center justify-between p-4 rounded-xl border border-gray-100/80 bg-white shadow-sm">
                <div className="space-y-0.5">
-                  <Label className="text-[14px] font-semibold text-foreground/90">Active Status</Label>
+                  <Label className="text-[14px] font-semibold text-foreground/90">{t('products.active')}</Label>
                </div>
                <label className="relative inline-flex items-center cursor-pointer">
                  <input type="checkbox" name="active" defaultChecked={product.active !== false} className="sr-only peer" />
@@ -139,7 +141,7 @@ export function EditProductDialog({
           <div className="px-8 py-5 border-t border-gray-100 bg-white flex justify-end gap-3 rounded-b-[1.5rem]">
              <Button type="button" variant="ghost" onClick={() => setOpen(false)} className="h-10 px-5 rounded-xl font-semibold text-muted-foreground hover:bg-gray-100">Reset</Button>
              <Button type="submit" disabled={loading} className="h-10 px-6 rounded-xl font-semibold bg-indigo-600 hover:bg-indigo-700 shadow-[0_4px_14px_0_rgba(79,70,229,0.39)] transition-all">
-               {loading ? "Syncing..." : "Save Product"}
+               {loading ? t('dashboard.syncing') : t('products.edit')}
              </Button>
           </div>
         </form>
