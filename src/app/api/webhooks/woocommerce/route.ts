@@ -5,6 +5,22 @@ import { createClient } from "@supabase/supabase-js"
 // Avoid caching webhooks
 export const dynamic = "force-dynamic"
 
+export async function GET(req: NextRequest) {
+  return NextResponse.json({ success: true, message: "Webhook endpoint is active" }, { status: 200 })
+}
+
+export async function OPTIONS(req: NextRequest) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      "Allow": "POST, GET, OPTIONS",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, x-wc-webhook-signature, x-wc-webhook-topic, x-wc-webhook-event",
+    },
+  })
+}
+
 export async function POST(req: NextRequest) {
   try {
     const signature = req.headers.get("x-wc-webhook-signature")
@@ -26,7 +42,14 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const payload = JSON.parse(body)
+    let payload: any = {}
+    if (body) {
+      try {
+        payload = JSON.parse(body)
+      } catch (e) {
+        console.warn("Could not parse JSON body")
+      }
+    }
     
     // Webhook ping validation (Woocommerce sends a ping to test the url)
     if (payload.webhook_id) {
@@ -34,11 +57,16 @@ export async function POST(req: NextRequest) {
     }
 
     // Initialize Supabase (with Service Role key or standard client if configured for RLS bypass)
-    // Note: It's recommended to use the `supabase_service_role_key` for webhook handlers.
-    const supabaseClient = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    )
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    
+    // Allow the webhook to return 200 even if Supabase is not configured yet (for testing webhooks)
+    if (!supabaseUrl || !supabaseKey) {
+       console.warn("Supabase not configured, skipping DB insert for webhook.", { payload })
+       return NextResponse.json({ success: true, warning: "Supabase not configured" }, { status: 200 })
+    }
+
+    const supabaseClient = createClient(supabaseUrl, supabaseKey)
 
     // 1. Audit Log: Insert raw webhook payload
     const { data: event, error: insertError } = await supabaseClient
@@ -57,14 +85,6 @@ export async function POST(req: NextRequest) {
       console.error("Failed to save webhook audit log:", insertError)
       return NextResponse.json({ error: "Storage error", details: insertError }, { status: 500 })
     }
-
-    // 2. We acknowledge receipt so WooCommerce does not timeout.
-    // In a production environment, order consumption processing could be decoupled 
-    // to a Supabase Function, Edge Function or Chron Jobs. For this MVP, we 
-    // could process it inline.
-    
-    // Example: Process Items here if you wish, or depend on a separate job.
-    // processOrderItems(payload) -> deduct stock -> update webhook_events processed = true ...
 
     return NextResponse.json({ success: true, eventId: event?.id }, { status: 200 })
   } catch (error: any) {
