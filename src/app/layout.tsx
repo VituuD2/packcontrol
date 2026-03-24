@@ -17,7 +17,7 @@ const jbMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "PackSync - WooCommerce Packaging Inventory",
+  title: "SB Pack Sync - WooCommerce Packaging Inventory",
   description: "Dashboard for controlling packaging inventory linked to WooCommerce.",
 };
 
@@ -31,8 +31,8 @@ export default function RootLayout({
       <body className={`${inter.variable} ${jbMono.variable} min-h-screen bg-background font-sans antialiased overflow-hidden`}>
         <ThemeProvider
             attribute="class"
-            defaultTheme="system"
-            enableSystem
+            defaultTheme="light"
+            enableSystem={false}
             disableTransitionOnChange
         >
           <div className="flex h-screen w-full bg-muted/20">
@@ -46,6 +46,7 @@ export default function RootLayout({
           </div>
           <Toaster />
         </ThemeProvider>
+
       </body>
     </html>
   );
