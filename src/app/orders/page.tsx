@@ -1,104 +1,122 @@
-import { RefreshCw, Search } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
 import { createClient } from "@/lib/supabase/server"
-import { format } from "date-fns"
+import { Badge } from "@/components/ui/badge"
+import { Package, AlertTriangle, CheckCircle2, Search, ArrowRight } from "lucide-react"
+import Link from "next/link"
 
-export const dynamic = "force-dynamic";
+export const dynamic = "force-dynamic"
 
-export default async function OrdersPage() {
-  const supabase = await createClient();
-  
-  // Fetch orders with their items
-  const { data: orders, error } = await supabase
-    .from('orders')
-    .select(`
-      *,
-      order_items(*)
-    `)
-    .order('created_at', { ascending: false });
+export default async function OrdersPage({
+  searchParams,
+}: {
+  searchParams: { [key: string]: string | string[] | undefined }
+}) {
+  const supabase = await createClient()
+  const filter = searchParams.filter === 'pending' ? false : null
+
+  let query = supabase
+    .from('webhook_events')
+    .select('*')
+    .in('event_type', ['order.created', 'order.updated'])
+    .order('created_at', { ascending: false })
+
+  if (filter === false) {
+    query = query.eq('processed', false)
+  }
+
+  const { data: orders, error } = await query
 
   return (
-    <div className="flex flex-col gap-6 w-full">
+    <div className="flex flex-col gap-6 w-full max-w-[1400px] mx-auto p-2">
       <div className="flex items-center justify-between">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-3xl font-bold tracking-tight">Sync Orders</h1>
-          <p className="text-muted-foreground">
-            View orders imported from WooCommerce and their packaging status.
-          </p>
-        </div>
-        <form action={async () => {
-          "use server";
-          // Implement force sync logic here calling generic webhook sync
-        }}>
-          <Button type="submit">
-            <RefreshCw className="mr-2 w-4 h-4" /> Force Sync
-          </Button>
-        </form>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground/90">Sales & Orders</h1>
+        {filter === false && (
+           <Link href="/orders" className="text-sm font-medium text-emerald-600 hover:text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100 transition-colors">
+              Clear Filter
+           </Link>
+        )}
       </div>
 
-      <div className="flex items-center gap-4">
-        <div className="relative flex-1 md:max-w-sm">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search orders..." className="pl-8" />
-        </div>
-      </div>
+      <div className="rounded-[1.25rem] border-0 shadow-[0_2px_20px_rgb(0,0,0,0.04)] bg-white overflow-hidden">
+        {orders && orders.length > 0 ? (
+          <div className="divide-y divide-gray-100">
+             <div className="flex items-center p-4 bg-gray-50/50 text-xs font-bold text-muted-foreground uppercase tracking-wider">
+               <div className="w-24 pl-2">Order</div>
+               <div className="flex-1">Customer</div>
+               <div className="w-32 text-right pr-4">Total</div>
+               <div className="w-48 text-center">SKUs & Recipe Status</div>
+             </div>
+            {orders.map((order) => {
+              const payload = order.payload || {}
+              const orderNumber = payload.number || payload.id || order.external_id
+              const customerName = payload.billing ? `${payload.billing.first_name} ${payload.billing.last_name}` : "Unknown"
+              const total = payload.total ? `R$ ${Number(payload.total).toFixed(2)}` : "R$ 0.00"
+              const isProcessed = order.processed
 
-      <div className="rounded-xl border shadow-sm bg-card p-0 overflow-hidden">
-         <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[100px]">Order</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Items Sold</TableHead>
-                <TableHead>Packaging Consumed</TableHead>
-                <TableHead className="text-right">Date</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {orders && orders.length > 0 ? (
-                orders.map((order) => (
-                  <TableRow key={order.id}>
-                    <TableCell className="font-medium">#{order.order_number}</TableCell>
-                    <TableCell>
-                      {order.status === 'completed' || order.status === 'processed' ? (
-                        <Badge variant="default" className="bg-emerald-500 hover:bg-emerald-600">Processed</Badge>
-                      ) : order.status === 'error' ? (
-                         <Badge variant="destructive">Error</Badge>
-                      ) : (
-                         <Badge variant="secondary" className="capitalize">{order.status}</Badge>
+              return (
+                <div key={order.id} className="flex flex-col sm:flex-row items-center p-4 gap-4 hover:bg-gray-50/50 transition-colors">
+                  
+                  {/* Order Number */}
+                  <div className="w-24 pl-2 font-mono font-semibold text-foreground/80">
+                    #{orderNumber}
+                  </div>
+
+                  {/* Customer Info */}
+                  <div className="flex-1 min-w-[200px] flex flex-col justify-center">
+                    <span className="font-semibold text-[15px] truncate text-foreground/90">{customerName}</span>
+                    <span className="text-xs font-medium text-muted-foreground truncate">{payload.billing?.email}</span>
+                  </div>
+
+                  {/* Total */}
+                  <div className="w-32 text-right pr-4">
+                    <span className="font-bold text-[15px] text-foreground/80">{total}</span>
+                  </div>
+
+                  {/* Status / SKUs */}
+                  <div className="w-48 flex justify-center items-center gap-2 sm:border-l border-gray-100">
+                    {isProcessed ? (
+                      <Badge className="bg-emerald-50 text-emerald-600 border-0 h-6 px-2 text-[11px] font-bold tracking-wide rounded-md gap-1">
+                        <CheckCircle2 className="w-3 h-3" /> Processed
+                      </Badge>
+                    ) : (
+                      <Badge className="bg-amber-50 text-amber-500 border-0 h-6 px-2 text-[11px] font-bold tracking-wide rounded-md gap-1">
+                        <AlertTriangle className="w-3 h-3" /> Pending Recipe
+                      </Badge>
+                    )}
+                  </div>
+                  
+                  {/* Extracted SKUs Mini Preview */}
+                  {payload.line_items && Array.isArray(payload.line_items) && (
+                    <div className="hidden lg:flex w-64 flex-wrap gap-1 items-center px-4 sm:border-l border-gray-100">
+                      {payload.line_items.slice(0, 2).map((li: any, idx: number) => (
+                        <span key={idx} className="text-[10px] font-mono text-muted-foreground bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100/50 max-w-full truncate">
+                          {li.quantity}x {li.sku}
+                        </span>
+                      ))}
+                      {payload.line_items.length > 2 && (
+                         <span className="text-[10px] font-bold text-muted-foreground">+{payload.line_items.length - 2}</span>
                       )}
-                    </TableCell>
-                    <TableCell>
-                      {order.order_items ? order.order_items.reduce((acc: number, item: any) => acc + Number(item.quantity), 0) : 0} items
-                    </TableCell>
-                    <TableCell>
-                      {/* Usually this data connects with packaging movements. Simplifying for view. */}
-                      {order.status === 'processing' ? <span className="text-muted-foreground italic">Pending</span> : 'Auto-deducted'}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {order.created_at ? format(new Date(order.created_at), 'MMM d, HH:mm') : '-'}
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                    No orders found. Set up your WooCommerce webhook to start syncing.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+                    </div>
+                  )}
+
+                  {/* Action Link to Products if Pending */}
+                  <div className="w-12 flex justify-end pr-2">
+                     {!isProcessed && (
+                       <Link href="/products" className="p-2 rounded-lg bg-indigo-50 text-indigo-500 hover:bg-indigo-100 transition-colors" title="Fix Missing Recipe in Products">
+                          <ArrowRight className="w-4 h-4" />
+                       </Link>
+                     )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        ) : (
+          <div className="p-16 flex flex-col items-center justify-center text-center">
+            <Package className="h-10 w-10 text-muted-foreground/20 mb-4" />
+            <h2 className="text-[15px] font-semibold text-foreground/80 tracking-tight">No orders found</h2>
+            <p className="text-xs text-muted-foreground mt-1">When sales are made, they will appear here automatically.</p>
+          </div>
+        )}
       </div>
     </div>
   )

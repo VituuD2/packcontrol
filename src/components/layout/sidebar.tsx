@@ -1,11 +1,11 @@
 import Link from 'next/link'
-import { LayoutDashboard, Package, Box, RefreshCw, Settings, History } from 'lucide-react'
+import { LayoutDashboard, Package, Box, RefreshCw, Settings, History, ShoppingCart } from 'lucide-react'
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
   { name: 'Products', href: '/products', icon: Box },
   { name: 'Packaging', href: '/packaging', icon: Package },
-  { name: 'Orders', href: '/orders', icon: RefreshCw },
+  { name: 'Orders', href: '/orders', icon: ShoppingCart },
   { name: 'Movements', href: '/movements', icon: History },
   { name: 'Settings', href: '/settings', icon: Settings },
 ]
