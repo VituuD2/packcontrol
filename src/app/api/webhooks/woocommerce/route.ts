@@ -24,7 +24,7 @@ export async function OPTIONS(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const signature = req.headers.get("x-wc-webhook-signature")
-    const eventTopic = req.headers.get("x-wc-webhook-topic") || req.headers.get("x-wc-webhook-event") || "order.created"
+    const eventTopic = req.headers.get("x-wc-webhook-topic") || req.headers.get("x-wc-webhook-event") || "unknown"
     
     const body = await req.text()
     

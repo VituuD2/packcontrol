@@ -1,5 +1,5 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Package, RefreshCw, AlertTriangle, TrendingUp, History } from "lucide-react"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Package, RefreshCw, AlertTriangle, TrendingUp, TrendingDown, History, BarChart3, Clock, CheckCircle2 } from "lucide-react"
 import { ConsumptionChart } from "@/components/dashboard/consumption-chart"
 import { ForceSyncButton } from "@/components/dashboard/force-sync-button"
 import { createClient } from "@/lib/supabase/server"
@@ -22,6 +22,7 @@ export default async function Dashboard() {
     .select('*', { count: 'exact', head: true })
     .gte('created_at', todayStart.toISOString())
     .eq('event_type', 'order.created')
+    .not('external_id', 'is', null)
 
   const { count: ordersYesterday } = await supabase
     .from('webhook_events')
@@ -29,29 +30,30 @@ export default async function Dashboard() {
     .gte('created_at', yesterdayStart.toISOString())
     .lt('created_at', todayStart.toISOString())
     .eq('event_type', 'order.created')
+    .not('external_id', 'is', null)
 
-  // Calculate percentage
   const todayCount = ordersToday || 0
   const yestCount = ordersYesterday || 0
   let orderTrend = 0
-  if (yestCount > 0) {
-    orderTrend = Math.round(((todayCount - yestCount) / yestCount) * 100)
-  } else if (todayCount > 0) {
-    orderTrend = 100
-  }
+  if (yestCount > 0) orderTrend = Math.round(((todayCount - yestCount) / yestCount) * 100)
+  else if (todayCount > 0) orderTrend = 100
 
   // Fetch Packaging Items for Low Stock alerts
   const { data: packagingItems } = await supabase
     .from('packaging_items')
-    .select('id, current_stock, minimum_stock')
+    .select('id, name, current_stock, minimum_stock')
     
   let lowStockCount = 0
   if (packagingItems) {
     lowStockCount = packagingItems.filter(item => item.current_stock <= item.minimum_stock).length
   }
 
-  // Fetch recent movements securely (Optimistic fetching, falling back if table structure differs)
+  // Fetch recent movements securely (Optimistic fetching)
   let recentMovements: any[] = []
+  let sevenDayMovements: any[] = []
+  const sevenDaysAgo = new Date(todayStart)
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6)
+
   try {
     const { data: movements } = await supabase
       .from('packaging_movements')
@@ -60,130 +62,154 @@ export default async function Dashboard() {
         packaging_items(name)
       `)
       .order('created_at', { ascending: false })
-      .limit(3)
-    if (movements) recentMovements = movements
+      .gte('created_at', sevenDaysAgo.toISOString())
+      
+    if (movements) {
+      recentMovements = movements.slice(0, 5)
+      sevenDayMovements = movements
+    }
   } catch (e) {
-    // If movement table does not exist or named differently, ignore for now to avoid breaking dashboard
+    // Silent fail if table not exist yet in local setup
   }
 
-  const itemsConsumedMock = todayCount * 3 // Mocked multiplier based on orders for MVP visualization if no movement table sums
+  // Generate chart data dynamically
+  const chartDataMap: Record<string, any> = {}
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(sevenDaysAgo)
+    d.setDate(d.getDate() + i)
+    const dayName = new Intl.DateTimeFormat('en-US', { weekday: 'short' }).format(d)
+    chartDataMap[dayName] = { name: dayName }
+  }
+
+  let totalItemsConsumed = 0
+  sevenDayMovements.forEach(mov => {
+    if (mov.type === 'Out') {
+      const dayName = new Intl.DateTimeFormat('en-US', { weekday: 'short' }).format(new Date(mov.created_at))
+      const itemName = mov.packaging_items?.name || "Other"
+      chartDataMap[dayName][itemName] = (chartDataMap[dayName][itemName] || 0) + mov.quantity
+      
+      // Calculate today's items consumed
+      const movDate = new Date(mov.created_at)
+      if (movDate >= todayStart) {
+        totalItemsConsumed += mov.quantity
+      }
+    }
+  })
+  
+  // Convert map to array for the chart
+  // Only use if there is actual Out data, else empty array
+  const hasOutData = sevenDayMovements.some(m => m.type === 'Out')
+  const chartData = hasOutData ? Object.values(chartDataMap) : []
 
   return (
-    <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto">
+    <div className="flex flex-col gap-8 w-full max-w-[1400px] mx-auto p-2">
       <div className="flex items-center justify-between">
-         <div className="flex flex-col gap-1">
-           <h1 className="text-3xl font-bold tracking-tight">System Overview</h1>
-           <p className="text-muted-foreground">
-             Real-time insight into your inventory, synced seamlessly with WooCommerce.
-           </p>
-         </div>
-         
-         <div className="flex items-center gap-3">
-           <ForceSyncButton />
-         </div>
+         <h1 className="text-2xl font-bold tracking-tight text-foreground/90">Overview</h1>
+         <ForceSyncButton />
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="rounded-2xl border bg-card/50 backdrop-blur-sm p-2 shadow-sm flex flex-col hover:shadow-md transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 pt-4">
-            <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Orders Today</CardTitle>
-            <div className="p-2 bg-blue-500/10 rounded-lg"><RefreshCw className="h-4 w-4 text-blue-600" /></div>
+        <Card className="rounded-[1.25rem] border-0 shadow-[0_2px_20px_rgb(0,0,0,0.04)] bg-white p-2 flex flex-col">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-5 pt-5">
+            <span className="text-[13px] font-semibold text-muted-foreground tracking-wide">ORDERS</span>
+            <div className="p-2 bg-blue-50 text-blue-500 rounded-xl"><RefreshCw className="h-4 w-4" /></div>
           </CardHeader>
-          <CardContent className="px-4 pb-4">
-            <div className="text-3xl font-bold tracking-tight">{todayCount}</div>
-            <p className="text-xs font-medium text-emerald-600 mt-1 flex items-center gap-1">
-              <TrendingUp className="w-3 h-3" />
-              {orderTrend >= 0 ? `+${orderTrend}%` : `${orderTrend}%`} vs yesterday
-            </p>
+          <CardContent className="px-5 pb-5">
+            <div className="flex items-end gap-3">
+              <span className="text-4xl font-extrabold tracking-tighter">{todayCount}</span>
+              {orderTrend !== 0 && (
+                <span className={`flex items-center text-xs font-semibold mb-1 ${orderTrend > 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                  {orderTrend > 0 ? <TrendingUp className="w-3 h-3 mr-0.5" /> : <TrendingDown className="w-3 h-3 mr-0.5" />}
+                  {Math.abs(orderTrend)}%
+                </span>
+              )}
+            </div>
           </CardContent>
         </Card>
         
-        <Card className="rounded-2xl border bg-card/50 backdrop-blur-sm p-2 shadow-sm flex flex-col hover:shadow-md transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 pt-4">
-            <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Est. Consumed</CardTitle>
-            <div className="p-2 bg-primary/10 rounded-lg"><Package className="h-4 w-4 text-primary" /></div>
+        <Card className="rounded-[1.25rem] border-0 shadow-[0_2px_20px_rgb(0,0,0,0.04)] bg-white p-2 flex flex-col">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-5 pt-5">
+            <span className="text-[13px] font-semibold text-muted-foreground tracking-wide">CONSUMPTION</span>
+            <div className="p-2 bg-indigo-50 text-indigo-500 rounded-xl"><Package className="h-4 w-4" /></div>
           </CardHeader>
-          <CardContent className="px-4 pb-4">
-            <div className="text-3xl font-bold tracking-tight">{itemsConsumedMock}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Based on recent order volume
-            </p>
+          <CardContent className="px-5 pb-5">
+            <div className="flex items-end gap-3">
+              <span className="text-4xl font-extrabold tracking-tighter">{totalItemsConsumed}</span>
+            </div>
           </CardContent>
         </Card>
         
-        <Card className="rounded-2xl border bg-card/50 backdrop-blur-sm p-2 shadow-sm flex flex-col hover:shadow-md transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 pt-4">
-            <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Low Alerts</CardTitle>
-            <div className={`p-2 rounded-lg ${lowStockCount > 0 ? "bg-red-500/10" : "bg-emerald-500/10"}`}>
-               <AlertTriangle className={`h-4 w-4 ${lowStockCount > 0 ? "text-red-600" : "text-emerald-600"}`} />
+        <Card className="rounded-[1.25rem] border-0 shadow-[0_2px_20px_rgb(0,0,0,0.04)] bg-white p-2 flex flex-col">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-5 pt-5">
+            <span className="text-[13px] font-semibold text-muted-foreground tracking-wide">ALERTS</span>
+            <div className={`p-2 rounded-xl ${lowStockCount > 0 ? "bg-rose-50 text-rose-500" : "bg-emerald-50 text-emerald-500"}`}>
+               {lowStockCount > 0 ? <AlertTriangle className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
             </div>
           </CardHeader>
-          <CardContent className="px-4 pb-4">
-            <div className={`text-3xl font-bold tracking-tight ${lowStockCount > 0 ? "text-red-600" : "text-emerald-600"}`}>{lowStockCount}</div>
-            <p className={`text-xs mt-1 ${lowStockCount > 0 ? "text-red-600/80" : "text-emerald-600/80"}`}>
-              {lowStockCount > 0 ? "Materials require restock" : "All materials at healthy stock"}
-            </p>
+          <CardContent className="px-5 pb-5">
+            <div className={`flex items-end gap-3`}>
+              <span className={`text-4xl font-extrabold tracking-tighter ${lowStockCount > 0 ? "text-rose-500" : "text-emerald-500"}`}>{lowStockCount}</span>
+            </div>
           </CardContent>
         </Card>
         
-        <Card className="rounded-2xl border bg-card/50 backdrop-blur-sm p-2 shadow-sm flex flex-col hover:shadow-md transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 pt-4">
-            <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Status</CardTitle>
-            <div className="p-2 bg-emerald-500/10 rounded-lg"><TrendingUp className="h-4 w-4 text-emerald-600" /></div>
+        <Card className="rounded-[1.25rem] border-0 shadow-[0_2px_20px_rgb(0,0,0,0.04)] bg-white p-2 flex flex-col">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-5 pt-5">
+            <span className="text-[13px] font-semibold text-muted-foreground tracking-wide">SYNC</span>
+            <div className="p-2 bg-emerald-50 rounded-xl text-emerald-500"><TrendingUp className="h-4 w-4" /></div>
           </CardHeader>
-          <CardContent className="px-4 pb-4">
-            <div className="text-3xl font-bold tracking-tight text-emerald-600">Online</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Webhook endpoint active
-            </p>
+          <CardContent className="px-5 pb-5">
+            <div className="flex items-end gap-3">
+              <span className="text-4xl font-extrabold tracking-tighter text-emerald-500">Active</span>
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-4 rounded-2xl border bg-card/50 backdrop-blur-sm shadow-sm overflow-hidden">
-          <CardHeader className="border-b bg-muted/10 pb-4">
-            <CardTitle className="text-lg">Consumption Over Time</CardTitle>
-            <CardDescription>
-              Material consumption trends for the current week.
-            </CardDescription>
+      <div className="grid gap-6 md:grid-cols-12">
+        <Card className="col-span-8 rounded-[1.25rem] border-0 shadow-[0_2px_20px_rgb(0,0,0,0.04)] bg-white p-2">
+          <CardHeader className="flex flex-row items-center gap-2 px-6 pt-6 pb-2">
+            <BarChart3 className="w-5 h-5 text-indigo-500" />
+            <h2 className="text-[15px] font-bold text-foreground">Market Statistics</h2>
+            <div className="ml-auto w-2 h-2 rounded-full bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]" />
           </CardHeader>
-          <CardContent className="pt-6 h-[380px]">
-             <ConsumptionChart />
+          <CardContent className="pt-2 px-6 h-[400px]">
+             <ConsumptionChart data={chartData} />
           </CardContent>
         </Card>
         
-        <Card className="col-span-3 rounded-2xl border bg-card/50 backdrop-blur-sm shadow-sm overflow-hidden flex flex-col">
-          <CardHeader className="border-b bg-muted/10 pb-4 flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-lg">Recent Movements</CardTitle>
-              <CardDescription>
-                Latest system adjustments.
-              </CardDescription>
+        <Card className="col-span-4 rounded-[1.25rem] border-0 shadow-[0_2px_20px_rgb(0,0,0,0.04)] bg-white p-2 flex flex-col">
+          <CardHeader className="flex flex-row items-center justify-between px-6 pt-6 pb-4 border-b border-gray-50/50">
+            <div className="flex items-center gap-2">
+              <History className="w-5 h-5 text-emerald-500" />
+              <h2 className="text-[15px] font-bold text-foreground">History</h2>
             </div>
-            <History className="h-5 w-5 text-muted-foreground/50" />
           </CardHeader>
-          <CardContent className="p-0 flex-1">
+          <CardContent className="p-2 flex-1 pt-2">
              {recentMovements.length > 0 ? (
-                <div className="divide-y">
+                <div className="flex flex-col gap-1">
                   {recentMovements.map((mov, i) => (
-                    <div key={i} className="flex items-center p-4 hover:bg-muted/30 transition-colors">
-                      <div className="space-y-1 flex-1">
-                        <p className="text-sm font-medium leading-none">{mov.packaging_items?.name || "Unknown Item"}</p>
-                        <p className="text-xs text-muted-foreground font-mono">
-                          {mov.reference || "System update"}
+                    <div key={i} className="flex items-center p-3 rounded-xl hover:bg-gray-50 transition-colors">
+                      <div className={`p-2 rounded-xl mr-3 ${mov.type === 'In' ? 'bg-emerald-50 text-emerald-500' : 'bg-rose-50 text-rose-500'}`}>
+                         {mov.type === 'In' ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+                      </div>
+                      <div className="space-y-0.5 flex-1">
+                        <p className="text-[13px] font-bold leading-none text-foreground/80">{mov.packaging_items?.name || "Unknown Item"}</p>
+                        <p className="text-[11px] font-medium text-muted-foreground/60 flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: 'numeric', hour12: true }).format(new Date(mov.created_at))}
                         </p>
                       </div>
-                      <div className={`font-bold ml-auto ${mov.type === 'In' ? 'text-emerald-500' : 'text-red-500'}`}>
+                      <div className={`font-bold text-[14px] ml-auto ${mov.type === 'In' ? 'text-emerald-500' : 'text-rose-500'}`}>
                         {mov.type === 'In' ? '+' : '-'}{mov.quantity}
                       </div>
                     </div>
                   ))}
                 </div>
              ) : (
-                <div className="flex flex-col items-center justify-center p-12 text-center text-muted-foreground/60">
-                   <History className="h-10 w-10 mb-3 opacity-20" />
-                   <p className="text-sm">Synchronizing ledger...</p>
+                <div className="flex flex-col items-center justify-center p-12 h-full gap-2 text-muted-foreground/40">
+                   <History className="w-8 h-8 opacity-20" />
+                   <span className="text-xs font-medium">No recent transactions</span>
                 </div>
              )}
           </CardContent>
