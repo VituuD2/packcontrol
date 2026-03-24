@@ -86,6 +86,90 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Storage error", details: insertError }, { status: 500 })
     }
 
+    // 2. Process Order and Deduct Packaging Items
+    // We only deduct stock if this is explicitly an order creation or processing event
+    // and if the payload actually contains line_items.
+    if ((eventTopic === "order.created" || eventTopic === "order.updated") && payload.line_items && Array.isArray(payload.line_items)) {
+      
+      let successfullyProcessed = true;
+
+      for (const line_item of payload.line_items) {
+        const itemSku = line_item.sku;
+        const purchaseQty = Number(line_item.quantity) || 1;
+
+        if (!itemSku) continue;
+
+        // Fetch our product and its packaging recipe rules
+        const { data: productData, error: productError } = await supabaseClient
+          .from("products")
+          .select(`
+            id, 
+            sku,
+            product_packaging_rules (
+              packaging_item_id,
+              quantity_used
+            )
+          `)
+          .eq("sku", itemSku)
+          .single();
+
+        if (productError || !productData) {
+          console.warn(`Webhook sync: SKU ${itemSku} completely unregistered in our system. Skipping deduction.`);
+          continue;
+        }
+
+        // Iterate over recipe rules
+        if (productData.product_packaging_rules && Array.isArray(productData.product_packaging_rules)) {
+          for (const rule of productData.product_packaging_rules) {
+            const deductionAmount = purchaseQty * Number(rule.quantity_used);
+
+            // Fetch the current stock for this packaging item (MVP read-modify-write)
+            const { data: packagingItemData, error: piError } = await supabaseClient
+              .from("packaging_items")
+              .select("current_stock")
+              .eq("id", rule.packaging_item_id)
+              .single();
+
+            if (piError || !packagingItemData) continue;
+
+            const oldStock = Number(packagingItemData.current_stock) || 0;
+            const newStock = oldStock - deductionAmount;
+
+            // Update new stock
+            const { error: updateError } = await supabaseClient
+              .from("packaging_items")
+              .update({ current_stock: newStock })
+              .eq("id", rule.packaging_item_id);
+
+            if (updateError) {
+              console.error(`Failed to update stock for packaging item ${rule.packaging_item_id}`);
+              successfullyProcessed = false;
+              continue;
+            }
+
+            // Log the movement in the ERP Immutable Ledger
+            await supabaseClient
+              .from("packaging_movements")
+              .insert({
+                packaging_item_id: rule.packaging_item_id,
+                movement_type: "out",
+                quantity: deductionAmount,
+                source_type: "order",
+                source_id: String(payload.id || payload.number || itemSku)
+              });
+          }
+        }
+      }
+
+      // Mark the webhook event as fully processed successfully
+      if (successfullyProcessed) {
+        await supabaseClient
+          .from("webhook_events")
+          .update({ processed: true })
+          .eq("id", event.id);
+      }
+    }
+
     return NextResponse.json({ success: true, eventId: event?.id }, { status: 200 })
   } catch (error: any) {
     console.error("Webhook processing error:", error)
