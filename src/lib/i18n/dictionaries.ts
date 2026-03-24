@@ -68,6 +68,18 @@ export const ptBR = {
     language_desc: "Escolha o idioma preferido para a plataforma.",
     save: "Salvar Preferências",
     saved: "Salvo"
+  },
+  orders: {
+    title: "Vendas e Pedidos",
+    clear_filter: "Limpar Filtro",
+    order: "Pedido",
+    customer: "Cliente",
+    total: "Total",
+    status: "SKUs & Status da Receita",
+    processed: "Processado",
+    pending: "Receita Pendente",
+    no_orders: "Nenhum pedido encontrado",
+    no_orders_desc: "Quando as vendas caírem, elas aparecerão aqui automaticamente."
   }
 };
 
@@ -141,5 +153,17 @@ export const enUS = {
     language_desc: "Choose your preferred language for the platform.",
     save: "Save Preferences",
     saved: "Saved"
+  },
+  orders: {
+    title: "Sales & Orders",
+    clear_filter: "Clear Filter",
+    order: "Order",
+    customer: "Customer",
+    total: "Total",
+    status: "SKUs & Recipe Status",
+    processed: "Processed",
+    pending: "Pending Recipe",
+    no_orders: "No orders found",
+    no_orders_desc: "When sales are made, they will appear here automatically."
   }
 };

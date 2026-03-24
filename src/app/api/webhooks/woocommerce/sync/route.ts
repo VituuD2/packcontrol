@@ -32,9 +32,29 @@ export async function POST(req: NextRequest) {
     // 2. Reprocess logic (same as webhook route)
     for (const event of pendingEvents || []) {
       const payload = event.payload;
+      const orderExternalId = payload?.id ? String(payload.id) : event.external_id;
       
       if (!payload?.line_items || !Array.isArray(payload.line_items)) {
          continue; 
+      }
+
+      let isDuplicate = false;
+      if (orderExternalId) {
+        const { data: existingMovements } = await supabaseClient
+          .from("packaging_movements")
+          .select("id")
+          .eq("source_type", "order")
+          .eq("source_id", String(orderExternalId))
+          .limit(1);
+          
+        if (existingMovements && existingMovements.length > 0) {
+          isDuplicate = true;
+        }
+      }
+
+      if (isDuplicate) {
+        await supabaseClient.from("webhook_events").update({ processed: true }).eq("id", event.id);
+        continue;
       }
 
       let successfullyProcessed = true;

@@ -19,14 +19,15 @@ export default async function Dashboard() {
   const yesterdayStart = new Date(todayStart)
   yesterdayStart.setDate(yesterdayStart.getDate() - 1)
 
-  // Fetch All-time Orders Processed
-  const { count: totalOrders } = await supabase
+  // Fetch All-time Orders Processed (Distinct by external_id)
+  const { data: allProcessedEvents } = await supabase
     .from('webhook_events')
-    .select('*', { count: 'exact', head: true })
-    .eq('event_type', 'order.created')
+    .select('external_id')
     .eq('processed', true)
-
-  const todayCount = totalOrders || 0
+    
+  // Deduplicate using a Set
+  const uniqueProcessIds = new Set(allProcessedEvents?.map(e => e.external_id).filter(Boolean))
+  const todayCount = uniqueProcessIds.size
   const orderTrend = 0 // Trend Disabled for All-Time count
 
   // Fetch Unprocessed Orders

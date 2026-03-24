@@ -1,7 +1,8 @@
 import { createClient } from "@/lib/supabase/server"
 import { Badge } from "@/components/ui/badge"
-import { Package, AlertTriangle, CheckCircle2, Search, ArrowRight } from "lucide-react"
+import { Package, AlertTriangle, CheckCircle2, ArrowRight } from "lucide-react"
 import Link from "next/link"
+import { getTranslation } from "@/lib/i18n/server"
 
 export const dynamic = "force-dynamic"
 
@@ -11,6 +12,7 @@ export default async function OrdersPage({
   searchParams: { [key: string]: string | string[] | undefined }
 }) {
   const supabase = await createClient()
+  const t = await getTranslation()
   const filter = searchParams.filter === 'pending' ? false : null
 
   let query = supabase
@@ -23,15 +25,35 @@ export default async function OrdersPage({
     query = query.eq('processed', false)
   }
 
-  const { data: orders, error } = await query
+  const { data: rawOrders, error } = await query
+
+  // Deduplicate orders by orderNumber so the UI only shows unique orders
+  const ordersMap = new Map()
+  if (rawOrders) {
+    for (const order of rawOrders) {
+      const payload = order.payload || {}
+      const orderNumber = payload.number || payload.id || order.external_id
+      if (orderNumber && String(orderNumber).trim() !== "undefined") {
+        if (!ordersMap.has(orderNumber)) {
+          ordersMap.set(orderNumber, order)
+        } else {
+          // If we already have it, keep the one that is 'processed: true'
+          if (!ordersMap.get(orderNumber).processed && order.processed) {
+            ordersMap.set(orderNumber, order)
+          }
+        }
+      }
+    }
+  }
+  const orders = Array.from(ordersMap.values())
 
   return (
     <div className="flex flex-col gap-6 w-full max-w-[1400px] mx-auto p-2">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground/90">Sales & Orders</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground/90">{t('orders.title')}</h1>
         {filter === false && (
            <Link href="/orders" className="text-sm font-medium text-emerald-600 hover:text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100 transition-colors">
-              Clear Filter
+              {t('orders.clear_filter')}
            </Link>
         )}
       </div>
@@ -40,10 +62,10 @@ export default async function OrdersPage({
         {orders && orders.length > 0 ? (
           <div className="divide-y divide-gray-100">
              <div className="flex items-center p-4 bg-gray-50/50 text-xs font-bold text-muted-foreground uppercase tracking-wider">
-               <div className="w-24 pl-2">Order</div>
-               <div className="flex-1">Customer</div>
-               <div className="w-32 text-right pr-4">Total</div>
-               <div className="w-48 text-center">SKUs & Recipe Status</div>
+               <div className="w-24 pl-2">{t('orders.order')}</div>
+               <div className="flex-1">{t('orders.customer')}</div>
+               <div className="w-32 text-right pr-4">{t('orders.total')}</div>
+               <div className="w-48 text-center">{t('orders.status')}</div>
              </div>
             {orders.map((order) => {
               const payload = order.payload || {}
@@ -75,11 +97,11 @@ export default async function OrdersPage({
                   <div className="w-48 flex justify-center items-center gap-2 sm:border-l border-gray-100">
                     {isProcessed ? (
                       <Badge className="bg-emerald-50 text-emerald-600 border-0 h-6 px-2 text-[11px] font-bold tracking-wide rounded-md gap-1">
-                        <CheckCircle2 className="w-3 h-3" /> Processed
+                        <CheckCircle2 className="w-3 h-3" /> {t('orders.processed')}
                       </Badge>
                     ) : (
                       <Badge className="bg-amber-50 text-amber-500 border-0 h-6 px-2 text-[11px] font-bold tracking-wide rounded-md gap-1">
-                        <AlertTriangle className="w-3 h-3" /> Pending Recipe
+                        <AlertTriangle className="w-3 h-3" /> {t('orders.pending')}
                       </Badge>
                     )}
                   </div>
@@ -113,8 +135,8 @@ export default async function OrdersPage({
         ) : (
           <div className="p-16 flex flex-col items-center justify-center text-center">
             <Package className="h-10 w-10 text-muted-foreground/20 mb-4" />
-            <h2 className="text-[15px] font-semibold text-foreground/80 tracking-tight">No orders found</h2>
-            <p className="text-xs text-muted-foreground mt-1">When sales are made, they will appear here automatically.</p>
+            <h2 className="text-[15px] font-semibold text-foreground/80 tracking-tight">{t('orders.no_orders')}</h2>
+            <p className="text-xs text-muted-foreground mt-1">{t('orders.no_orders_desc')}</p>
           </div>
         )}
       </div>

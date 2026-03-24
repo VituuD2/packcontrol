@@ -91,6 +91,29 @@ export async function POST(req: NextRequest) {
     // and if the payload actually contains line_items.
     if ((eventTopic === "order.created" || eventTopic === "order.updated") && payload.line_items && Array.isArray(payload.line_items)) {
       
+      const orderExternalId = payload.id ? String(payload.id) : null;
+      
+      // Idempotency check: see if we already processed this order ID
+      let isDuplicate = false;
+      if (orderExternalId) {
+        const { data: existingMovements } = await supabaseClient
+          .from("packaging_movements")
+          .select("id")
+          .eq("source_type", "order")
+          .eq("source_id", orderExternalId)
+          .limit(1);
+          
+        if (existingMovements && existingMovements.length > 0) {
+          isDuplicate = true;
+        }
+      }
+
+      if (isDuplicate) {
+         // Already deducted stock. Just mark this webhook as processed.
+         await supabaseClient.from("webhook_events").update({ processed: true }).eq("id", event.id);
+         return NextResponse.json({ success: true, message: "Duplicate event. Stock already deducted." }, { status: 200 });
+      }
+
       let successfullyProcessed = true;
 
       for (const line_item of payload.line_items) {
