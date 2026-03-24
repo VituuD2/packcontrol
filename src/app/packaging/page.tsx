@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import { Badge } from "@/components/ui/badge"
 import { CreatePackagingDialog } from "@/components/packaging/create-packaging-dialog"
+import { EditPackagingDialog } from "@/components/packaging/edit-packaging-dialog"
 
 export const dynamic = "force-dynamic"
 
@@ -55,81 +56,110 @@ export default async function PackagingPage() {
     }
   }
 
-  return (
-    <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto">
-      <div className="flex items-center justify-between">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-3xl font-bold tracking-tight">Packaging Inventory</h1>
-          <p className="text-muted-foreground">
-            Manage your boxes, bags, and other packaging materials.
-          </p>
-        </div>
+  async function editPackaging(formData: FormData) {
+    "use server"
+    const supabaseServer = await createClient()
+    const id = formData.get('id') as string
+    const name = formData.get('name') as string
+    const sku_internal = formData.get('sku_internal') as string
+    const unit = formData.get('unit') as string
+    const current_stock = Number(formData.get('current_stock'))
+    const minimum_stock = Number(formData.get('minimum_stock'))
+    let image_url = formData.get('image_url') as string
+    const image_file = formData.get('image_file') as File
 
+    if (image_file && image_file.size > 0) {
+      const fileExt = image_file.name.split('.').pop()
+      const fileName = `packaging-${Date.now()}.${fileExt}`
+      const { data, error } = await supabaseServer.storage.from('images').upload(`packaging/${fileName}`, image_file)
+      
+      if (!error) {
+        const { data: { publicUrl } } = supabaseServer.storage.from('images').getPublicUrl(`packaging/${fileName}`)
+        image_url = publicUrl
+      }
+    }
+
+    const { error } = await supabaseServer.from('packaging_items').update({
+      name,
+      sku_internal,
+      unit,
+      current_stock,
+      minimum_stock,
+      image_url: image_url || null
+    }).eq("id", id)
+
+    if (!error) {
+      revalidatePath('/packaging')
+    } else {
+      throw new Error(error.message)
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-6 w-full max-w-[1400px] mx-auto p-2">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground/90">Packaging Inventory</h1>
         <CreatePackagingDialog addAction={addPackaging} />
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="rounded-[1.25rem] border-0 shadow-[0_2px_20px_rgb(0,0,0,0.04)] bg-white overflow-hidden">
         {packagingItems && packagingItems.length > 0 ? (
-          packagingItems.map((item) => (
-            <div key={item.id} className="group overflow-hidden rounded-2xl border bg-card/50 backdrop-blur-sm p-0 shadow-sm flex flex-col justify-between hover:shadow-md hover:border-border/80 transition-all">
-              
-              <div className="flex items-center p-5 border-b bg-muted/10 gap-4">
-                <div className="w-16 h-16 rounded-xl bg-muted overflow-hidden flex-shrink-0 border flex items-center justify-center relative">
+          <div className="divide-y divide-gray-100">
+            {packagingItems.map((item) => (
+              <div key={item.id} className="flex flex-col sm:flex-row items-center p-4 gap-4 hover:bg-gray-50/50 transition-colors">
+                
+                {/* Image */}
+                <div className="w-16 h-16 shrink-0 rounded-xl bg-gray-100 flex items-center justify-center overflow-hidden border border-gray-100/50">
                    {item.image_url ? (
                      <img src={item.image_url} alt={item.name} className="object-cover w-full h-full" />
                    ) : (
-                     <Package className="w-6 h-6 text-muted-foreground/40" />
+                     <Package className="w-6 h-6 text-muted-foreground/30" />
                    )}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between">
-                    <h3 className="font-semibold text-lg tracking-tight truncate">{item.name}</h3>
-                  </div>
-                  <p className="text-sm border bg-background/50 inline-block px-1.5 py-0.5 rounded text-muted-foreground mt-1 font-mono tracking-tight">
-                    {item.sku_internal}
-                  </p>
-                </div>
-              </div>
 
-              <div className="p-5 flex flex-col gap-4">
-                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/40 border border-border/50">
-                  <div className="flex flex-col">
-                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-0.5">Current Stock</span>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-2xl font-bold tracking-tight">{item.current_stock}</span>
-                      <span className="text-sm font-medium text-muted-foreground">{item.unit}</span>
+                {/* Info (Name, SKU) */}
+                <div className="flex-1 min-w-[200px] flex flex-col justify-center">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="font-semibold text-[15px] truncate text-foreground/90">{item.name}</h3>
+                  </div>
+                  <span className="text-xs font-medium font-mono text-muted-foreground bg-gray-50 px-1.5 py-0.5 rounded-md self-start border border-gray-100/50">{item.sku_internal}</span>
+                </div>
+
+                {/* Stock Details */}
+                <div className="flex items-center justify-between gap-8 md:gap-12 px-6 sm:border-l border-gray-100">
+                  <div className="flex flex-col items-center">
+                    <span className="text-[10px] uppercase font-bold text-muted-foreground/60 tracking-wider mb-0.5">Current</span>
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-xl font-bold tracking-tight text-foreground/90">{item.current_stock}</span>
+                      <span className="text-xs font-medium text-muted-foreground">{item.unit}</span>
                     </div>
                   </div>
                   
-                  <div className="h-10 w-[1px] bg-border/80"></div>
-                  
-                  <div className="flex flex-col text-right">
-                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-0.5">Target Min</span>
-                    <div className="flex items-baseline justify-end gap-1">
-                      <span className="text-lg font-semibold tracking-tight text-foreground/80">{item.minimum_stock}</span>
-                    </div>
+                  <div className="flex flex-col items-center">
+                    <span className="text-[10px] uppercase font-bold text-muted-foreground/60 tracking-wider mb-0.5">Minimum</span>
+                    <span className="text-base font-semibold text-foreground/70">{item.minimum_stock}</span>
+                  </div>
+
+                  <div className="w-[110px] flex justify-end">
+                    {item.current_stock <= item.minimum_stock ? (
+                      <Badge className="bg-rose-50 text-rose-600 border-0 h-6 px-2 text-[11px] font-bold tracking-wide rounded-md">Reorder</Badge>
+                    ) : (
+                      <Badge className="bg-emerald-50 text-emerald-600 border-0 h-6 px-2 text-[11px] font-bold tracking-wide rounded-md">Healthy</Badge>
+                    )}
                   </div>
                 </div>
 
-                {item.current_stock <= item.minimum_stock ? (
-                  <Badge variant="destructive" className="justify-center py-1.5 shadow-sm font-medium tracking-wide">
-                    ⚠️ Low Stock Alert
-                  </Badge>
-                ) : (
-                  <Badge variant="outline" className="justify-center py-1.5 border-emerald-200 bg-emerald-50 text-emerald-600 font-medium tracking-wide">
-                    Stock Healthy
-                  </Badge>
-                )}
+                {/* Actions */}
+                <div className="flex items-center justify-center pl-4 sm:border-l border-gray-100">
+                  <EditPackagingDialog item={item} editAction={editPackaging} />
+                </div>
               </div>
-            </div>
-          ))
+            ))}
+          </div>
         ) : (
-          <div className="col-span-full rounded-2xl border border-dashed bg-card/30 p-12 flex flex-col items-center justify-center shadow-sm">
-            <Package className="h-12 w-12 text-muted-foreground/30 mb-4" />
-            <h2 className="text-xl font-semibold tracking-tight">No packaging items found</h2>
-            <p className="text-muted-foreground mt-1 mb-6 max-w-sm text-center">
-              Get started by adding your first packaging material to the inventory system.
-            </p>
+          <div className="p-16 flex flex-col items-center justify-center text-center">
+            <Package className="h-10 w-10 text-muted-foreground/20 mb-4" />
+            <h2 className="text-[15px] font-semibold text-foreground/80 tracking-tight">No packaging items found</h2>
           </div>
         )}
       </div>

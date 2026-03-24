@@ -42,9 +42,6 @@ export default function SettingsPage() {
     <div className="flex flex-col gap-6 w-full max-w-4xl mx-auto py-2">
       <div className="flex flex-col gap-1">
         <h1 className="text-3xl font-bold tracking-tight">Configuration</h1>
-        <p className="text-muted-foreground">
-          Manage system preferences and integration keys.
-        </p>
       </div>
 
       <div className="flex flex-col gap-8">

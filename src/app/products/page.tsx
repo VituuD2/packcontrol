@@ -118,89 +118,70 @@ export default async function ProductsPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto">
+    <div className="flex flex-col gap-6 w-full max-w-[1400px] mx-auto p-2">
       <div className="flex items-center justify-between">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-3xl font-bold tracking-tight">Products Catalog</h1>
-          <p className="text-muted-foreground">
-            Manage WooCommerce SKUs, metadata, and packaging composition rules.
-          </p>
-        </div>
-        
+        <h1 className="text-2xl font-bold tracking-tight text-foreground/90">Products Catalog</h1>
         <CreateProductDialog addAction={addProduct} />
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+      <div className="rounded-[1.25rem] border-0 shadow-[0_2px_20px_rgb(0,0,0,0.04)] bg-white overflow-hidden">
         {products && products.length > 0 ? (
-          products.map((product) => (
-            <div key={product.id} className="group relative overflow-hidden rounded-2xl border bg-card/50 backdrop-blur-sm p-0 shadow-sm transition-all hover:shadow-md hover:border-border/80 flex flex-col h-full">
-              
-              <div className="relative h-48 w-full bg-muted/30 border-b overflow-hidden flex items-center justify-center">
-                {product.image_url ? (
-                  <img 
-                     src={product.image_url} 
-                     alt={product.name}
-                     className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
-                  />
-                ) : (
-                  <div className="flex flex-col items-center justify-center text-muted-foreground/40">
-                    <Box className="h-10 w-10 mb-2" />
-                    <span className="text-xs font-medium uppercase tracking-wider">No Image</span>
-                  </div>
-                )}
-                <div className="absolute top-3 right-3 flex gap-2">
-                  {product.active ? (
-                    <Badge className="bg-white/90 text-emerald-700 hover:bg-white/90 shadow-sm border-0 font-medium">Active</Badge>
+          <div className="divide-y divide-gray-100">
+            {products.map((product) => (
+              <div key={product.id} className="flex flex-col sm:flex-row items-center p-4 gap-4 hover:bg-gray-50/50 transition-colors">
+                
+                {/* Image */}
+                <div className="w-16 h-16 shrink-0 rounded-xl bg-gray-100 flex items-center justify-center overflow-hidden border border-gray-100/50">
+                  {product.image_url ? (
+                    <img src={product.image_url} alt={product.name} className="object-cover w-full h-full" />
                   ) : (
-                    <Badge variant="secondary" className="bg-white/90 shadow-sm border-0">Inactive</Badge>
+                    <Box className="w-6 h-6 text-muted-foreground/30" />
                   )}
                 </div>
-              </div>
 
-              <div className="p-5 flex flex-col flex-1">
-                <div className="flex justify-between items-start mb-1">
-                   <h3 className="font-semibold text-lg tracking-tight line-clamp-1">{product.name}</h3>
-                </div>
-                <span className="text-sm font-mono text-muted-foreground mb-3">SKU: {product.sku}</span>
-                
-                <div className="flex items-center gap-2 mb-4">
-                  <EditProductDialog product={product} editAction={editProduct} />
-                  <ManageRecipeDialog product={product} packagingItems={packagingItems || []} attachAction={attachPackaging} />
-                </div>
-                
-                <div className="mt-auto pt-4 border-t">
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Packaging Recipe</h4>
+                {/* Info (Name, SKU, Status) */}
+                <div className="flex-1 min-w-0 flex flex-col justify-center">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="font-semibold text-[15px] truncate text-foreground/90">{product.name}</h3>
+                    {product.active ? (
+                      <Badge className="bg-emerald-50 text-emerald-600 border-0 h-5 px-1.5 text-[10px] uppercase font-bold tracking-wider rounded-md">Active</Badge>
+                    ) : (
+                      <Badge className="bg-gray-100 text-gray-500 border-0 h-5 px-1.5 text-[10px] uppercase font-bold tracking-wider rounded-md">Inactive</Badge>
+                    )}
                   </div>
-                  
+                  <span className="text-xs font-medium font-mono text-muted-foreground bg-gray-50 px-1.5 py-0.5 rounded-md self-start border border-gray-100/50">{product.sku}</span>
+                </div>
+
+                {/* Recipe Overview */}
+                <div className="flex-1 min-w-[200px] hidden md:flex flex-col justify-center border-l border-gray-100 pl-6 space-y-1">
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Recipe</span>
                   {product.product_packaging_rules && product.product_packaging_rules.length > 0 ? (
-                    <ul className="space-y-2">
+                    <div className="flex flex-wrap gap-1">
                       {product.product_packaging_rules.map((rule: any, idx: number) => (
-                        <li key={idx} className="flex justify-between items-center text-sm bg-muted/40 px-3 py-2 rounded-lg border border-border/50">
-                          <span className="font-medium text-foreground/80">{rule.packaging_items?.name}</span>
-                          <span className="font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-md">
-                            {rule.quantity_used}x <span className="text-xs font-normal opacity-70">{rule.packaging_items?.unit}</span>
-                          </span>
-                        </li>
+                        <span key={idx} className="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100/50">
+                          {rule.quantity_used}x <span className="truncate max-w-[80px] text-indigo-900/70">{rule.packaging_items?.name}</span>
+                        </span>
                       ))}
-                    </ul>
-                  ) : (
-                    <div className="text-sm text-muted-foreground italic bg-muted/20 px-3 py-4 rounded-lg border border-dashed text-center flex flex-col items-center justify-center">
-                      <PackagePlus className="h-5 w-5 mb-1 opacity-40" />
-                      <span>No recipe defined</span>
                     </div>
+                  ) : (
+                    <span className="text-[11px] font-medium text-muted-foreground/50 flex items-center gap-1">
+                      <PackagePlus className="w-3 h-3" /> No recipe defined
+                    </span>
                   )}
                 </div>
+
+                {/* Actions */}
+                <div className="flex items-center gap-2 ml-auto shrink-0 pl-4 sm:border-l border-gray-100">
+                  <ManageRecipeDialog product={product} packagingItems={packagingItems || []} attachAction={attachPackaging} />
+                  <EditProductDialog product={product} editAction={editProduct} />
+                </div>
               </div>
-            </div>
-          ))
+            ))}
+          </div>
         ) : (
-          <div className="col-span-full rounded-2xl border border-dashed bg-card/30 p-12 flex flex-col items-center justify-center shadow-sm">
-            <Box className="h-12 w-12 text-muted-foreground/30 mb-4" />
-            <h2 className="text-xl font-semibold tracking-tight">No products found</h2>
-            <p className="text-muted-foreground mb-6 max-w-sm text-center">
-              Define your products to associate them with packaging rules and begin syncing with WooCommerce.
-            </p>
+          <div className="p-16 flex flex-col items-center justify-center text-center">
+            <Box className="h-10 w-10 text-muted-foreground/20 mb-4" />
+            <h2 className="text-[15px] font-semibold text-foreground/80 tracking-tight">No products found</h2>
           </div>
         )}
       </div>
