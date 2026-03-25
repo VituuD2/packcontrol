@@ -3,19 +3,19 @@ import { z } from "zod"
 
 // Zod schema for WooCommerce line items
 const LineItemSchema = z.object({
-  id: z.number().optional(),
+  id: z.union([z.number(), z.string()]).optional(),
   name: z.string().optional(),
-  product_id: z.number().optional(),
-  variation_id: z.number().optional(),
-  quantity: z.number(),
+  product_id: z.union([z.number(), z.string()]).optional(),
+  variation_id: z.union([z.number(), z.string()]).optional(),
+  quantity: z.coerce.number(),
   sku: z.string().nullable().optional(),
 })
 
 const OrderPayloadSchema = z.object({
-  id: z.number(),
-  number: z.string().optional(),
+  id: z.coerce.number(),
+  number: z.union([z.number(), z.string()]).optional(),
   status: z.string().optional(),
-  line_items: z.array(LineItemSchema),
+  line_items: z.array(LineItemSchema).optional().default([]),
 })
 
 export type WebhookEventStatus = 'pending' | 'processing' | 'processed' | 'failed'
@@ -41,8 +41,16 @@ export async function processWebhookEvent(supabase: SupabaseClient, eventId: str
     const eventType = event.event_type
 
     // We only process order transitions to 'processing' or 'created'
-    // This logic can be expanded based on specific business needs
-    if (eventType === 'order.created' || eventType === 'order.updated') {
+    if (eventType === 'order.created' || eventType === 'order.updated' || eventType.includes('order')) {
+      // Defensive check: Ensure we have a payload that looks like an order
+      if (!payload || typeof payload !== 'object' || (!payload.id && !payload.number)) {
+         await supabase.from('webhook_events').update({
+            status: 'processed', // Skip if it's not processable as an order
+            last_error: `Skipped: Payload missing typical order fields (ID/Number). Event type: ${eventType}`
+         }).eq('id', eventId)
+         return { success: true, message: 'Skipped malformed or non-order payload' }
+      }
+
       const parsedOrder = OrderPayloadSchema.parse(payload)
       const orderExternalId = String(parsedOrder.id)
 

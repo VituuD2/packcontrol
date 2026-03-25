@@ -185,7 +185,12 @@ export default async function Dashboard() {
                 <span className={`text-4xl font-extrabold tracking-tighter ${unprocessedOrdersCount > 0 ? "text-amber-500" : "text-emerald-500"}`}>{unprocessedOrdersCount}</span>
               </div>
               {unprocessedOrdersCount > 0 && <span className="text-xs font-semibold text-amber-500 mt-1 block">{t('dashboard.orders_missing')}</span>}
-              {permanentlyFailedCount > 0 && <span className="text-xs font-bold text-rose-500 mt-1 block">{permanentlyFailedCount} permanent failures</span>}
+              {permanentlyFailedCount > 0 && (
+                <div className="mt-2 p-2 bg-rose-500/10 rounded-lg border border-rose-500/20">
+                  <span className="text-[11px] font-bold text-rose-500 block uppercase tracking-wider mb-1">{permanentlyFailedCount} falhas persistentes</span>
+                  <p className="text-[10px] text-rose-400/80 leading-tight">Verifique se todos os produtos possuem regras de embalagem configuradas.</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </Link>
