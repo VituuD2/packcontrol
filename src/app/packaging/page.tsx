@@ -100,18 +100,18 @@ export default async function PackagingPage() {
   return (
     <div className="flex flex-col gap-6 w-full max-w-[1400px] mx-auto p-2">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground/90">{t('packaging.title')}</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground/90 dark:text-[#EDEDED]">{t('packaging.title')}</h1>
         <CreatePackagingDialog addAction={addPackaging} />
       </div>
 
-      <div className="rounded-[1.25rem] border-0 shadow-[0_2px_20px_rgb(0,0,0,0.04)] bg-white overflow-hidden">
+      <div className="rounded-[1.25rem] border-0 dark:border dark:border-border shadow-[0_2px_20px_rgb(0,0,0,0.04)] dark:shadow-none bg-white dark:bg-card overflow-hidden">
         {packagingItems && packagingItems.length > 0 ? (
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-gray-100 dark:divide-white/[0.04]">
             {packagingItems.map((item) => (
-              <div key={item.id} className="flex flex-col sm:flex-row items-center p-4 gap-4 hover:bg-gray-50/50 transition-colors">
+              <div key={item.id} className="flex flex-col sm:flex-row items-center p-4 gap-4 hover:bg-gray-50/50 dark:hover:bg-white/[0.02] transition-colors">
                 
                 {/* Image */}
-                <div className="w-16 h-16 shrink-0 rounded-xl bg-gray-100 flex items-center justify-center overflow-hidden border border-gray-100/50">
+                <div className="w-16 h-16 shrink-0 rounded-xl bg-gray-100 dark:bg-white/[0.04] flex items-center justify-center overflow-hidden border border-gray-100/50 dark:border-white/[0.04]">
                    {item.image_url ? (
                      <img src={item.image_url} alt={item.name} className="object-cover w-full h-full" />
                    ) : (
@@ -122,37 +122,37 @@ export default async function PackagingPage() {
                 {/* Info (Name, SKU) */}
                 <div className="flex-1 min-w-[200px] flex flex-col justify-center">
                   <div className="flex items-center gap-2 mb-1">
-                    <h3 className="font-semibold text-[15px] truncate text-foreground/90">{item.name}</h3>
+                    <h3 className="font-semibold text-[15px] truncate text-foreground/90 dark:text-[#EDEDED]">{item.name}</h3>
                   </div>
-                  <span className="text-xs font-medium font-mono text-muted-foreground bg-gray-50 px-1.5 py-0.5 rounded-md self-start border border-gray-100/50">{item.sku_internal}</span>
+                  <span className="text-xs font-medium font-mono text-muted-foreground bg-gray-50 dark:bg-white/[0.04] px-1.5 py-0.5 rounded-md self-start border border-gray-100/50 dark:border-white/[0.04]">{item.sku_internal}</span>
                 </div>
 
                 {/* Stock Details */}
-                <div className="flex items-center justify-between gap-8 md:gap-12 px-6 sm:border-l border-gray-100">
+                <div className="flex items-center justify-between gap-8 md:gap-12 px-6 sm:border-l border-gray-100 dark:border-white/[0.04]">
                   <div className="flex flex-col items-center">
                     <span className="text-[10px] uppercase font-bold text-muted-foreground/60 tracking-wider mb-0.5">{t('packaging.stock')}</span>
                     <div className="flex items-baseline gap-1.5">
-                      <span className="text-xl font-bold tracking-tight text-foreground/90">{item.current_stock}</span>
+                      <span className="text-xl font-bold tracking-tight text-foreground/90 dark:text-[#EDEDED]">{item.current_stock}</span>
                       <span className="text-xs font-medium text-muted-foreground">{item.unit}</span>
                     </div>
                   </div>
                   
                   <div className="flex flex-col items-center">
                     <span className="text-[10px] uppercase font-bold text-muted-foreground/60 tracking-wider mb-0.5">{t('packaging.min_stock')}</span>
-                    <span className="text-base font-semibold text-foreground/70">{item.minimum_stock}</span>
+                    <span className="text-base font-semibold text-foreground/70 dark:text-[#CCCCCC]">{item.minimum_stock}</span>
                   </div>
 
                   <div className="w-[110px] flex justify-end">
                     {item.current_stock <= item.minimum_stock ? (
-                      <Badge className="bg-rose-50 text-rose-600 border-0 h-6 px-2 text-[11px] font-bold tracking-wide rounded-md">Reorder</Badge>
+                      <Badge className="bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400 border-0 h-6 px-2 text-[11px] font-bold tracking-wide rounded-md">Reorder</Badge>
                     ) : (
-                      <Badge className="bg-emerald-50 text-emerald-600 border-0 h-6 px-2 text-[11px] font-bold tracking-wide rounded-md">Healthy</Badge>
+                      <Badge className="bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 border-0 h-6 px-2 text-[11px] font-bold tracking-wide rounded-md">Healthy</Badge>
                     )}
                   </div>
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center justify-center pl-4 sm:border-l border-gray-100">
+                <div className="flex items-center justify-center pl-4 sm:border-l border-gray-100 dark:border-white/[0.04]">
                   <EditPackagingDialog item={item} editAction={editPackaging} />
                 </div>
               </div>

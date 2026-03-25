@@ -16,11 +16,11 @@ export function Sidebar() {
   ]
 
   return (
-    <div className="hidden border-r bg-muted/40 md:block w-64 shrink-0">
-      <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
+    <div className="hidden border-r dark:border-white/[0.04] bg-muted/40 dark:bg-[#0A0A0A] md:block w-64 shrink-0">
+      <div className="flex h-14 items-center border-b dark:border-white/[0.04] px-4 lg:h-[60px] lg:px-6">
         <Link href="/" className="flex items-center gap-2 font-semibold text-primary">
           <Package className="h-6 w-6" />
-          <span className="text-foreground">SB Pack Sync</span>
+          <span className="text-foreground dark:text-[#EDEDED]">SB Pack Sync</span>
         </Link>
       </div>
       <div className="flex-1 py-4">
@@ -29,7 +29,7 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
-              className="flex items-center gap-3 rounded-xl px-3 py-2 text-muted-foreground transition-all hover:text-primary hover:bg-muted"
+              className="flex items-center gap-3 rounded-xl px-3 py-2 text-muted-foreground transition-all hover:text-primary hover:bg-muted dark:hover:bg-white/[0.04]"
             >
               <item.icon className="h-4 w-4" />
               {item.name}

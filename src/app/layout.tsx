@@ -37,7 +37,7 @@ export default function RootLayout({
             disableTransitionOnChange
         >
           <I18nProvider>
-            <div className="flex h-screen w-full bg-muted/20">
+            <div className="flex h-screen w-full bg-muted/20 dark:bg-[#0A0A0A]">
               <Sidebar />
               <div className="flex flex-col flex-1 h-screen overflow-hidden">
                 <Header />

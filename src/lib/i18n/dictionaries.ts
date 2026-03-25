@@ -66,6 +66,10 @@ export const ptBR = {
     title: "Configurações Globais",
     language: "Idioma da Interface",
     language_desc: "Escolha o idioma preferido para a plataforma.",
+    theme: "Tema de App",
+    theme_desc: "Alternar entre modo claro e escuro sofisticado.",
+    light: "Claro",
+    dark: "Escuro",
     save: "Salvar Preferências",
     saved: "Salvo"
   },
