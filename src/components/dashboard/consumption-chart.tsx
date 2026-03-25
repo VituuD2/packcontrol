@@ -26,9 +26,18 @@ export function ConsumptionChart({ data }: { data: any[] }) {
   // Define a set of pleasing SaaS colors for the lines
   const colors = ["#4f46e5", "#10b981", "#f59e0b", "#ec4899", "#8b5cf6", "#14b8a6"]
 
+  // Fill in missing keys with 0 so Recharts Area can draw continuous lines instead of sparse dots
+  const normalizedData = data.map(d => {
+    const newObj = { ...d }
+    keys.forEach(k => {
+      if (newObj[k] === undefined) newObj[k] = 0
+    })
+    return newObj
+  })
+
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+      <AreaChart data={normalizedData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.04)" />
         <XAxis
           dataKey="name"
