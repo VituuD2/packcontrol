@@ -30,14 +30,21 @@ export default async function Dashboard() {
   const todayCount = uniqueProcessIds.size
   const orderTrend = 0 // Trend Disabled for All-Time count
 
-  // Fetch Unprocessed Orders
-  const { count: unprocessedCount } = await supabase
+  // Fetch Pending Webhooks
+  const { count: pendingCount } = await supabase
     .from('webhook_events')
     .select('*', { count: 'exact', head: true })
-    .eq('processed', false)
-    .in('event_type', ['order.created', 'order.updated'])
+    .in('status', ['pending', 'processing', 'failed'])
     
-  const unprocessedOrdersCount = unprocessedCount || 0
+  const unprocessedOrdersCount = pendingCount || 0
+
+  // Fetch Specifically Failed Webhooks (for detailed alert if needed)
+  const { count: failedCount } = await supabase
+    .from('webhook_events')
+    .select('*', { count: 'exact', head: true })
+    .eq('status', 'failed')
+  
+  const permanentlyFailedCount = failedCount || 0
 
   // Fetch Packaging Items for Low Stock alerts
   const { data: packagingItems } = await supabase
@@ -178,6 +185,7 @@ export default async function Dashboard() {
                 <span className={`text-4xl font-extrabold tracking-tighter ${unprocessedOrdersCount > 0 ? "text-amber-500" : "text-emerald-500"}`}>{unprocessedOrdersCount}</span>
               </div>
               {unprocessedOrdersCount > 0 && <span className="text-xs font-semibold text-amber-500 mt-1 block">{t('dashboard.orders_missing')}</span>}
+              {permanentlyFailedCount > 0 && <span className="text-xs font-bold text-rose-500 mt-1 block">{permanentlyFailedCount} permanent failures</span>}
             </CardContent>
           </Card>
         </Link>

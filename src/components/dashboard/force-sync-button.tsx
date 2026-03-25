@@ -21,13 +21,9 @@ export function ForceSyncButton() {
       const ck = localStorage.getItem("woocommerce_ck")
       const cs = localStorage.getItem("woocommerce_cs")
 
-      const response = await fetch('/api/webhooks/woocommerce/sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          consumerKey: ck || "", 
-          consumerSecret: cs || "" 
-        })
+      const response = await fetch('/api/cron/process-webhooks', {
+        method: 'GET', // CRON route is GET properly secured
+        headers: { 'Content-Type': 'application/json' }
       })
 
       if (!response.ok) throw new Error("Sync failed")

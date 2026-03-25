@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from "next/server"
 import crypto from "crypto"
 import { createClient } from "@supabase/supabase-js"
+import { z } from "zod"
 
 // Avoid caching webhooks
 export const dynamic = "force-dynamic"
+
+// Light validation for the ingest stage
+const WebhookPayloadSchema = z.object({
+  id: z.number().optional(),
+  number: z.string().optional(),
+}).passthrough()
 
 export async function GET(req: NextRequest) {
   return NextResponse.json({ success: true, message: "Webhook endpoint is active" }, { status: 200 })
@@ -28,7 +35,7 @@ export async function POST(req: NextRequest) {
     
     const body = await req.text()
     
-    // Validate WooCommerce HMAC-SHA256 signature if a secret is provided in ENV
+    // 1. Signature Validation (Critical Sec)
     const secret = process.env.WC_WEBHOOK_SECRET
     if (secret && signature) {
       const expectedSignature = crypto
@@ -37,7 +44,6 @@ export async function POST(req: NextRequest) {
         .digest("base64")
       
       if (signature !== expectedSignature) {
-        console.error("Webhook unauthorized: invalid signature")
         return NextResponse.json({ error: "Invalid signature" }, { status: 401 })
       }
     }
@@ -47,167 +53,57 @@ export async function POST(req: NextRequest) {
       try {
         payload = JSON.parse(body)
       } catch (e) {
-        console.warn("Could not parse JSON body")
+        return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
       }
     }
     
-    // Webhook ping validation (Woocommerce sends a ping to test the url)
+    // Ping check
     if (payload.webhook_id) {
        return NextResponse.json({ success: true, message: "Webhook ping received" }, { status: 200 })
     }
 
-    // Initialize Supabase (with Service Role key or standard client if configured for RLS bypass)
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-    
-    // Allow the webhook to return 200 even if Supabase is not configured yet (for testing webhooks)
-    if (!supabaseUrl || !supabaseKey) {
-       console.warn("Supabase not configured, skipping DB insert for webhook.", { payload })
-       return NextResponse.json({ success: true, warning: "Supabase not configured" }, { status: 200 })
+    const supabase = createClient(supabaseUrl!, supabaseKey!)
+
+    // 2. Validate basic structure
+    const parsed = WebhookPayloadSchema.safeParse(payload)
+    if (!parsed.success) {
+       return NextResponse.json({ error: "Malformed payload" }, { status: 400 })
     }
 
-    const supabaseClient = createClient(supabaseUrl, supabaseKey)
+    const externalId = payload.id ? String(payload.id) : null
+    
+    // 3. Generate Idempotency Key
+    // Pattern: source_event_id
+    const idempotencyKey = `wc_${eventTopic}_${externalId || crypto.randomUUID()}`
 
-    // 1. Audit Log: Insert raw webhook payload
-    const { data: event, error: insertError } = await supabaseClient
+    // 4. Ingest Event (Status: pending)
+    // We use upsert on idempotency_key to allow retries from WooCommerce without duplicate rows
+    const { data: event, error: insertError } = await supabase
       .from("webhook_events")
-      .insert({
+      .upsert({
         source: "woocommerce",
         event_type: eventTopic,
-        external_id: payload.id ? String(payload.id) : null,
+        external_id: externalId,
         payload: payload,
-        processed: false,
-      })
-      .select("id")
+        status: 'pending',
+        idempotency_key: idempotencyKey,
+        next_retry_at: new Date().toISOString()
+      }, { onConflict: 'idempotency_key', ignoreDuplicates: true })
+      .select("id, status")
       .single()
 
-    if (insertError) {
-      console.error("Failed to save webhook audit log:", insertError)
-      return NextResponse.json({ error: "Storage error", details: insertError }, { status: 500 })
-    }
+    // If ignoreDuplicates triggered, event will be null. That's fine, we still return 202.
+    
+    return NextResponse.json({ 
+      success: true, 
+      status: 'queued',
+      eventId: event?.id 
+    }, { status: 202 })
 
-    // 2. Process Order and Deduct Packaging Items
-    // We only deduct stock if this is explicitly an order creation or processing event
-    // and if the payload actually contains line_items.
-    if ((eventTopic === "order.created" || eventTopic === "order.updated") && payload.line_items && Array.isArray(payload.line_items)) {
-      
-      const orderExternalId = payload.id ? String(payload.id) : null;
-      
-      // Idempotency check: see if we already processed this order ID
-      let isDuplicate = false;
-      if (orderExternalId) {
-        const { data: existingMovements } = await supabaseClient
-          .from("packaging_movements")
-          .select("id")
-          .eq("source_type", "order")
-          .eq("source_id", orderExternalId)
-          .limit(1);
-          
-        if (existingMovements && existingMovements.length > 0) {
-          isDuplicate = true;
-        }
-      }
-
-      if (isDuplicate) {
-         // Already deducted stock. Just mark this webhook as processed.
-         await supabaseClient.from("webhook_events").update({ processed: true }).eq("id", event.id);
-         return NextResponse.json({ success: true, message: "Duplicate event. Stock already deducted." }, { status: 200 });
-      }
-
-      let successfullyProcessed = true;
-
-      for (const line_item of payload.line_items) {
-        const itemSku = line_item.sku;
-        const purchaseQty = Number(line_item.quantity) || 1;
-
-        if (!itemSku) continue;
-
-        // Fetch our product and its packaging recipe rules
-        const { data: productData, error: productError } = await supabaseClient
-          .from("products")
-          .select(`
-            id, 
-            sku,
-            product_packaging_rules (
-              packaging_item_id,
-              quantity_used
-            )
-          `)
-          .eq("sku", itemSku)
-          .single();
-
-        if (productError || !productData) {
-          console.warn(`Webhook sync: SKU ${itemSku} unregistered. Auto-creating product as inactive.`);
-          
-          // Auto-registration: Creates the product so the user sees it in the Products Catalog
-          await supabaseClient.from("products").insert({
-            sku: itemSku,
-            name: line_item.name || "Auto-imported Product",
-            active: false
-          });
-
-          successfullyProcessed = false;
-          continue;
-        }
-
-        // Iterate over recipe rules
-        if (productData.product_packaging_rules && Array.isArray(productData.product_packaging_rules) && productData.product_packaging_rules.length > 0) {
-          for (const rule of productData.product_packaging_rules) {
-            const deductionAmount = purchaseQty * Number(rule.quantity_used);
-
-            // Fetch the current stock for this packaging item (MVP read-modify-write)
-            const { data: packagingItemData, error: piError } = await supabaseClient
-              .from("packaging_items")
-              .select("current_stock")
-              .eq("id", rule.packaging_item_id)
-              .single();
-
-            if (piError || !packagingItemData) continue;
-
-            const oldStock = Number(packagingItemData.current_stock) || 0;
-            const newStock = oldStock - deductionAmount;
-
-            // Update new stock
-            const { error: updateError } = await supabaseClient
-              .from("packaging_items")
-              .update({ current_stock: newStock })
-              .eq("id", rule.packaging_item_id);
-
-            if (updateError) {
-              console.error(`Failed to update stock for packaging item ${rule.packaging_item_id}`);
-              successfullyProcessed = false;
-              continue;
-            }
-
-            // Log the movement in the ERP Immutable Ledger
-            await supabaseClient
-              .from("packaging_movements")
-              .insert({
-                packaging_item_id: rule.packaging_item_id,
-                movement_type: "out",
-                quantity: deductionAmount,
-                source_type: "order",
-                source_id: String(payload.id || payload.number || itemSku)
-              });
-          }
-        } else {
-          // The product exists, but has NO recipe rules attached. Mark order as unprocessed!
-          successfullyProcessed = false;
-        }
-      }
-
-      // Mark the webhook event as fully processed successfully
-      if (successfullyProcessed) {
-        await supabaseClient
-          .from("webhook_events")
-          .update({ processed: true })
-          .eq("id", event.id);
-      }
-    }
-
-    return NextResponse.json({ success: true, eventId: event?.id }, { status: 200 })
   } catch (error: any) {
-    console.error("Webhook processing error:", error)
-    return NextResponse.json({ error: "Internal server error", message: error?.message || String(error) }, { status: 500 })
+    console.error("Webhook ingestion error:", error)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
