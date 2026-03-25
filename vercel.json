@@ -1,8 +1,8 @@
-{
-  "crons": [
-    {
-      "path": "/api/cron/process-webhooks",
-      "schedule": "* * * * *"
-    }
-  ]
-}
+  {
+    "crons": [
+      {
+        "path": "/api/cron/process-webhooks",
+        "schedule": "* * * * *"
+      }
+    ]
+  }
