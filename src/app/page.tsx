@@ -184,7 +184,7 @@ export default async function Dashboard() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-12">
-        <Card className="col-span-8 rounded-[1.25rem] border-0 shadow-[0_2px_20px_rgb(0,0,0,0.04)] bg-white p-2">
+        <Card className="col-span-8 rounded-[1.25rem] border-0 dark:border dark:border-white/[0.04] shadow-[0_2px_20px_rgb(0,0,0,0.04)] dark:shadow-none bg-white dark:bg-[#141415] p-2">
           <CardHeader className="flex flex-row items-center gap-2 px-6 pt-6 pb-2">
             <BarChart3 className="w-5 h-5 text-indigo-500" />
             <h2 className="text-[15px] font-bold text-foreground">Market Statistics</h2>
@@ -195,7 +195,7 @@ export default async function Dashboard() {
           </CardContent>
         </Card>
         
-        <Card className="col-span-4 rounded-[1.25rem] border-0 shadow-[0_2px_20px_rgb(0,0,0,0.04)] bg-white p-2 flex flex-col">
+        <Card className="col-span-4 rounded-[1.25rem] border-0 dark:border dark:border-white/[0.04] shadow-[0_2px_20px_rgb(0,0,0,0.04)] dark:shadow-none bg-white dark:bg-[#141415] p-2 flex flex-col">
           <CardHeader className="flex flex-row items-center justify-between px-6 pt-6 pb-4 border-b border-gray-50/50 dark:border-border">
             <div className="flex items-center gap-2">
               <History className="w-5 h-5 text-emerald-500" />
