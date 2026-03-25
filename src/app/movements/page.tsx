@@ -1,5 +1,5 @@
 import { Search, History } from "lucide-react"
-import { Input } from "@/components/ui/input"
+import { SearchInput } from "@/components/ui/search-input"
 import {
   Table,
   TableBody,
@@ -16,13 +16,16 @@ import { getTranslation } from "@/lib/i18n/server"
 
 export const dynamic = "force-dynamic"
 
-export default async function MovementsPage() {
+export default async function MovementsPage(props: { searchParams: Promise<any> }) {
+  const params = await props.searchParams
+  const query = params?.q || ""
+
   const supabase = await createClient()
   const t = await getTranslation()
 
   let movements: any[] = []
   try {
-    const { data } = await supabase
+    let dbQuery = supabase
       .from('packaging_movements')
       .select(`
         *,
@@ -30,6 +33,12 @@ export default async function MovementsPage() {
       `)
       .order('created_at', { ascending: false })
       .limit(100)
+      
+    if (query) {
+      dbQuery = dbQuery.or(`source_id.ilike.%${query}%,source_type.ilike.%${query}%`)
+    }
+    
+    const { data } = await dbQuery
     
     if (data) movements = data
   } catch (error) {
@@ -75,10 +84,7 @@ export default async function MovementsPage() {
       </div>
 
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="relative w-full max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground dark:text-[#A1A1AA]" />
-          <Input placeholder="Search movements..." className="pl-9 h-10 w-full bg-background/50 border-border/80 rounded-lg shadow-sm" />
-        </div>
+        <SearchInput placeholder="Search movements..." />
       </div>
 
       <div className="rounded-2xl bg-card/60 dark:bg-[#141415] border-border/80 dark:border-white/[0.04] shadow-sm dark:shadow-none bg-card/60 backdrop-blur-md overflow-hidden">

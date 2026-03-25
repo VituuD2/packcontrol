@@ -1,7 +1,8 @@
-import { Box, PackagePlus } from "lucide-react"
+import { Box, PackagePlus, Search, MoreVertical, Plus } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import { Badge } from "@/components/ui/badge"
+import { SearchInput } from "@/components/ui/search-input"
 import { CreateProductDialog } from "@/components/products/create-product-dialog"
 import { EditProductDialog } from "@/components/products/edit-product-dialog"
 import { ManageRecipeDialog } from "@/components/products/manage-recipe-dialog"
@@ -9,21 +10,29 @@ import { getTranslation } from "@/lib/i18n/server"
 
 export const dynamic = "force-dynamic"
 
-export default async function ProductsPage() {
+export default async function ProductsPage(props: { searchParams: { q?: string } }) {
+  const query = props.searchParams?.q || ""
+
   const supabase = await createClient()
   const t = await getTranslation()
 
   // Fetch products and their packaging rules
-  const { data: products, error } = await supabase
+  let dbQuery = supabase
     .from('products')
     .select(`
       *,
       product_packaging_rules(
         quantity_used,
-        packaging_items(name, sku_internal, unit)
+        packaging_items(id, name, sku_internal, current_stock, minimum_stock)
       )
     `)
     .order('created_at', { ascending: false })
+
+  if (query) {
+    dbQuery = dbQuery.or(`name.ilike.%${query}%,sku.ilike.%${query}%`)
+  }
+  
+  const { data: products, error } = await dbQuery
 
   // Fetch packaging items to select from inside the Manage Recipe dialog
   const { data: packagingItems } = await supabase
@@ -127,6 +136,8 @@ export default async function ProductsPage() {
         <h1 className="text-2xl font-bold tracking-tight text-foreground/90 dark:text-[#EDEDED]">{t('products.title')}</h1>
         <CreateProductDialog addAction={addProduct} />
       </div>
+
+      <SearchInput placeholder={t('products.search')} />
 
       <div className="rounded-[1.25rem] border-0 dark:border dark:border-border shadow-[0_2px_20px_rgb(0,0,0,0.04)] dark:shadow-none bg-white dark:bg-card overflow-hidden">
         {products && products.length > 0 ? (

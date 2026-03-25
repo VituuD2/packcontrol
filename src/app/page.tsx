@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Package, RefreshCw, AlertTriangle, TrendingUp, TrendingDown, History, BarChart3, Clock, CheckCircle2 } from "lucide-react"
-import { ConsumptionChart } from "@/components/dashboard/consumption-chart"
+import { ChartWrapper as ConsumptionChart } from "@/components/dashboard/chart-wrapper"
 import { ForceSyncButton } from "@/components/dashboard/force-sync-button"
 import { createClient } from "@/lib/supabase/server"
 import { getTranslation } from "@/lib/i18n/server"

@@ -2,20 +2,31 @@ import { Package } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import { Badge } from "@/components/ui/badge"
+import { Search, Plus } from "lucide-react" // Added Search and Plus
+import { SearchInput } from "@/components/ui/search-input" // Added SearchInput
 import { CreatePackagingDialog } from "@/components/packaging/create-packaging-dialog"
 import { EditPackagingDialog } from "@/components/packaging/edit-packaging-dialog"
 import { getTranslation } from "@/lib/i18n/server"
 
 export const dynamic = "force-dynamic"
 
-export default async function PackagingPage() {
+export default async function PackagingPage(props: { searchParams: Promise<any> }) {
+  const params = await props.searchParams
+  const query = params?.q || ""
+
   const supabase = await createClient()
   const t = await getTranslation()
 
-  const { data: packagingItems, error } = await supabase
+  let dbQuery = supabase
     .from('packaging_items')
     .select('*')
     .order('created_at', { ascending: false })
+
+  if (query) {
+    dbQuery = dbQuery.or(`name.ilike.%${query}%,sku_internal.ilike.%${query}%`)
+  }
+
+  const { data: packagingItems, error } = await dbQuery // Modified this line to use dbQuery
 
   async function addPackaging(formData: FormData) {
     "use server"
@@ -42,7 +53,7 @@ export default async function PackagingPage() {
       }
     }
 
-    const { error } = await supabaseServer.from('packaging_items').insert({
+    const { error: insertError } = await supabaseServer.from('packaging_items').insert({ // Renamed error variable to avoid conflict
       name,
       sku_internal,
       unit,
@@ -51,10 +62,10 @@ export default async function PackagingPage() {
       image_url: image_url || null
     })
 
-    if (!error) {
+    if (!insertError) { // Used insertError here
       revalidatePath('/packaging')
     } else {
-      throw new Error(error.message)
+      throw new Error(insertError.message) // Used insertError here
     }
   }
 
@@ -81,7 +92,7 @@ export default async function PackagingPage() {
       }
     }
 
-    const { error } = await supabaseServer.from('packaging_items').update({
+    const { error: updateError } = await supabaseServer.from('packaging_items').update({ // Renamed error variable to avoid conflict
       name,
       sku_internal,
       unit,
@@ -90,10 +101,10 @@ export default async function PackagingPage() {
       image_url: image_url || null
     }).eq("id", id)
 
-    if (!error) {
+    if (!updateError) { // Used updateError here
       revalidatePath('/packaging')
     } else {
-      throw new Error(error.message)
+      throw new Error(updateError.message) // Used updateError here
     }
   }
 
@@ -103,6 +114,8 @@ export default async function PackagingPage() {
         <h1 className="text-2xl font-bold tracking-tight text-foreground/90 dark:text-[#EDEDED]">{t('packaging.title')}</h1>
         <CreatePackagingDialog addAction={addPackaging} />
       </div>
+
+      <SearchInput placeholder="Search materials..." /> {/* Moved SearchInput here for better UI placement */}
 
       <div className="rounded-[1.25rem] border-0 dark:border dark:border-border shadow-[0_2px_20px_rgb(0,0,0,0.04)] dark:shadow-none bg-white dark:bg-card overflow-hidden">
         {packagingItems && packagingItems.length > 0 ? (

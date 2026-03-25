@@ -3,29 +3,33 @@ import { Badge } from "@/components/ui/badge"
 import { Package, AlertTriangle, CheckCircle2, ArrowRight } from "lucide-react"
 import Link from "next/link"
 import { getTranslation } from "@/lib/i18n/server"
+import { SearchInput } from "@/components/ui/search-input"
 
 export const dynamic = "force-dynamic"
 
-export default async function OrdersPage({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string | string[] | undefined }
-}) {
+export default async function OrdersPage(props: { searchParams: Promise<any> }) {
   const supabase = await createClient()
   const t = await getTranslation()
-  const filter = searchParams.filter === 'pending' ? false : null
+  const params = await props.searchParams
+  
+  const filter = params?.filter || 'all'
+  const query = params?.q || ""
 
-  let query = supabase
+  let dbQuery = supabase
     .from('webhook_events')
     .select('*')
     .in('event_type', ['order.created', 'order.updated'])
     .order('created_at', { ascending: false })
 
-  if (filter === false) {
-    query = query.eq('processed', false)
+  if (query) {
+    dbQuery = dbQuery.or(`external_id.ilike.%${query}%,payload->billing->email.ilike.%${query}%,payload->billing->first_name.ilike.%${query}%,payload->billing->last_name.ilike.%${query}%`)
   }
 
-  const { data: rawOrders, error } = await query
+  if (filter === 'pending') {
+    dbQuery = dbQuery.eq('processed', false)
+  }
+
+  const { data: rawOrders, error } = await dbQuery
 
   // Deduplicate orders by orderNumber so the UI only shows unique orders
   const ordersMap = new Map()
@@ -51,7 +55,7 @@ export default async function OrdersPage({
     <div className="flex flex-col gap-6 w-full max-w-[1400px] mx-auto p-2">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight text-foreground/90 dark:text-[#EDEDED]">{t('orders.title')}</h1>
-        {filter === false && (
+        {filter === 'pending' && (
            <Link href="/orders" className="text-sm font-medium text-emerald-600 hover:text-emerald-700 bg-emerald-50 dark:bg-emerald-500/10 px-3 py-1.5 rounded-lg border border-emerald-100 dark:border-emerald-500/20 transition-colors">
               {t('orders.clear_filter')}
            </Link>
@@ -63,7 +67,10 @@ export default async function OrdersPage({
           <div className="divide-y divide-gray-100 dark:divide-white/[0.04]">
              <div className="flex items-center p-4 bg-gray-50/50 dark:bg-white/[0.02] text-xs font-bold text-muted-foreground uppercase tracking-wider">
                <div className="w-24 pl-2">{t('orders.order')}</div>
-               <div className="flex-1">{t('orders.customer')}</div>
+               <div className="flex-1 flex items-center gap-2">
+                 <SearchInput placeholder={t('orders.search')} />
+                 {t('orders.customer')}
+               </div>
                <div className="w-32 text-right pr-4">{t('orders.total')}</div>
                <div className="w-48 text-center">{t('orders.status')}</div>
              </div>
