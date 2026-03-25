@@ -26,7 +26,7 @@ export default async function OrdersPage(props: { searchParams: Promise<any> }) 
   }
 
   if (filter === 'pending') {
-    dbQuery = dbQuery.eq('processed', false)
+    dbQuery = dbQuery.in('status', ['pending', 'failed', 'processing'])
   }
 
   const { data: rawOrders, error } = await dbQuery
@@ -41,8 +41,11 @@ export default async function OrdersPage(props: { searchParams: Promise<any> }) 
         if (!ordersMap.has(orderNumber)) {
           ordersMap.set(orderNumber, order)
         } else {
-          // If we already have it, keep the one that is 'processed: true'
-          if (!ordersMap.get(orderNumber).processed && order.processed) {
+          // If we already have it, keep the one that is 'processed' or the most recent
+          const existing = ordersMap.get(orderNumber)
+          if (existing.status !== 'processed' && order.status === 'processed') {
+            ordersMap.set(orderNumber, order)
+          } else if (existing.status === order.status && new Date(order.created_at) > new Date(existing.created_at)) {
             ordersMap.set(orderNumber, order)
           }
         }
@@ -79,7 +82,7 @@ export default async function OrdersPage(props: { searchParams: Promise<any> }) 
               const orderNumber = payload.number || payload.id || order.external_id
               const customerName = payload.billing ? `${payload.billing.first_name} ${payload.billing.last_name}` : "Unknown"
               const total = payload.total ? `R$ ${Number(payload.total).toFixed(2)}` : "R$ 0.00"
-              const isProcessed = order.processed
+              const isProcessed = order.status === 'processed'
 
               return (
                 <div key={order.id} className="flex flex-col sm:flex-row items-center p-4 gap-4 hover:bg-gray-50/50 dark:hover:bg-white/[0.02] transition-colors">

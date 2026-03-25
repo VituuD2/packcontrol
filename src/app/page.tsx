@@ -30,21 +30,23 @@ export default async function Dashboard() {
   const todayCount = uniqueProcessIds.size
   const orderTrend = 0 // Trend Disabled for All-Time count
 
-  // Fetch Pending Webhooks
-  const { count: pendingCount } = await supabase
+  // Fetch Unique Pending/Failed Orders
+  const { data: pendingEvents } = await supabase
     .from('webhook_events')
-    .select('*', { count: 'exact', head: true })
+    .select('external_id')
     .in('status', ['pending', 'processing', 'failed'])
     
-  const unprocessedOrdersCount = pendingCount || 0
+  // Deduplicate to show unique order count
+  const pendingOrdersIds = new Set(pendingEvents?.map(e => e.external_id).filter(Boolean))
+  const unprocessedOrdersCount = pendingOrdersIds.size
 
   // Fetch Specifically Failed Webhooks (for detailed alert if needed)
-  const { count: failedCount } = await supabase
+  const { data: failedEvents } = await supabase
     .from('webhook_events')
-    .select('*', { count: 'exact', head: true })
+    .select('external_id')
     .eq('status', 'failed')
   
-  const permanentlyFailedCount = failedCount || 0
+  const permanentlyFailedCount = new Set(failedEvents?.map(e => e.external_id).filter(Boolean)).size
 
   // Fetch Packaging Items for Low Stock alerts
   const { data: packagingItems } = await supabase

@@ -21,7 +21,7 @@ export function ForceSyncButton() {
       const ck = localStorage.getItem("woocommerce_ck")
       const cs = localStorage.getItem("woocommerce_cs")
 
-      const response = await fetch('/api/cron/process-webhooks', {
+      const response = await fetch('/api/cron/process-webhooks?force=true', {
         method: 'GET', // CRON route is GET properly secured
         headers: { 'Content-Type': 'application/json' }
       })

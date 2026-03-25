@@ -20,14 +20,20 @@ export async function GET(req: NextRequest) {
 
   const BATCH_SIZE = 10
   const now = new Date().toISOString()
+  const force = req.nextUrl.searchParams.get('force') === 'true'
 
   // 1. Fetch events to process
-  // We look for pending or failed events that are due for retry
-  const { data: queueItems, error: fetchError } = await supabase
+  // We look for pending or failed events
+  let dbQuery = supabase
     .from('webhook_events')
     .select('id, status')
     .in('status', ['pending', 'failed'])
-    .lte('next_retry_at', now)
+  
+  if (!force) {
+    dbQuery = dbQuery.lte('next_retry_at', now)
+  }
+
+  const { data: queueItems, error: fetchError } = await dbQuery
     .order('next_retry_at', { ascending: true })
     .limit(BATCH_SIZE)
 
