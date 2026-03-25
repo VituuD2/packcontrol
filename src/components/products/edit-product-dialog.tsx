@@ -46,30 +46,30 @@ export function EditProductDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button variant="outline" size="sm" className="h-8 gap-1 cursor-pointer bg-white border-gray-200/60 shadow-sm hover:bg-gray-50/50" />}>
+      <DialogTrigger render={<Button variant="outline" size="sm" className="h-8 gap-1 cursor-pointer bg-white dark:bg-[#141415] dark:border dark:border-white/[0.04] dark:shadow-none border-gray-200/60 shadow-sm hover:bg-gray-50/50" />}>
         <Pencil className="w-3.5 h-3.5 text-indigo-500" /> {t('products.edit')}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[480px] p-0 border-0 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] rounded-[1.5rem] overflow-hidden bg-white">
+      <DialogContent className="sm:max-w-[480px] p-0 border-0 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] rounded-[1.5rem] overflow-hidden bg-white dark:bg-[#141415] dark:border dark:border-white/[0.04] dark:shadow-none">
         <form onSubmit={handleSubmit} className="flex flex-col">
           
           <div className="px-8 pt-8 pb-4">
             <DialogHeader>
-              <DialogTitle className="text-xl font-bold tracking-tight text-foreground/90 flex items-center gap-2">
-                 <div className="p-2 bg-indigo-50 text-indigo-500 rounded-xl inline-flex"><Pencil className="w-5 h-5" /></div>
+              <DialogTitle className="text-xl font-bold tracking-tight text-foreground/90 dark:text-[#EDEDED] flex items-center gap-2">
+                 <div className="p-2 bg-indigo-50 text-indigo-500 dark:bg-indigo-500/10 dark:text-indigo-400 rounded-xl inline-flex"><Pencil className="w-5 h-5" /></div>
                  Edit Product Identity
               </DialogTitle>
             </DialogHeader>
           </div>
 
-          <div className="px-8 py-5 space-y-6 bg-gray-50/30">
+          <div className="px-8 py-5 space-y-6 bg-gray-50/30 dark:bg-black/20">
             {/* Status Toggle */}
-            <div className="flex items-center justify-between p-4 rounded-xl border border-gray-100/80 bg-white shadow-sm">
+            <div className="flex items-center justify-between p-4 rounded-xl border border-gray-100/80 bg-white dark:bg-[#141415] dark:border dark:border-white/[0.04] dark:shadow-none shadow-sm">
                <div className="space-y-0.5">
-                  <Label className="text-[14px] font-semibold text-foreground/90">{t('products.active')}</Label>
+                  <Label className="text-[14px] font-semibold text-foreground/90 dark:text-[#EDEDED]">{t('products.active')}</Label>
                </div>
                <label className="relative inline-flex items-center cursor-pointer">
                  <input type="checkbox" name="active" defaultChecked={product.active !== false} className="sr-only peer" />
-                 <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                 <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white dark:bg-[#141415] dark:border dark:border-white/[0.04] dark:shadow-none after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
                </label>
             </div>
 
@@ -81,7 +81,7 @@ export function EditProductDialog({
                   name="name" 
                   defaultValue={product.name} 
                   required 
-                  className="h-11 bg-white border-gray-200/60 focus-visible:ring-indigo-500/20 focus-visible:border-indigo-500 rounded-xl px-4 text-[14px] shadow-sm font-medium" 
+                  className="h-11 bg-white dark:bg-[#141415] dark:border dark:border-white/[0.04] dark:shadow-none border-gray-200/60 focus-visible:ring-indigo-500/20 focus-visible:border-indigo-500 rounded-xl px-4 text-[14px] shadow-sm font-medium" 
                 />
               </div>
 
@@ -96,7 +96,7 @@ export function EditProductDialog({
                     name="sku" 
                     defaultValue={product.sku} 
                     required 
-                    className="h-11 bg-white pl-10 border-gray-200/60 focus-visible:ring-indigo-500/20 focus-visible:border-indigo-500 rounded-xl text-[14px] shadow-sm font-mono" 
+                    className="h-11 bg-white dark:bg-[#141415] dark:border dark:border-white/[0.04] dark:shadow-none pl-10 border-gray-200/60 focus-visible:ring-indigo-500/20 focus-visible:border-indigo-500 rounded-xl text-[14px] shadow-sm font-mono" 
                    />
                 </div>
               </div>
@@ -104,9 +104,9 @@ export function EditProductDialog({
 
             <div className="space-y-1.5">
               <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider ml-1">Product Media</Label>
-              <div className="p-4 rounded-xl border border-gray-100/80 bg-white shadow-sm space-y-3">
+              <div className="p-4 rounded-xl border border-gray-100/80 bg-white dark:bg-[#141415] dark:border dark:border-white/[0.04] dark:shadow-none shadow-sm space-y-3">
                 <div className="flex items-center gap-3">
-                   <div className="p-2 bg-indigo-50 text-indigo-500 rounded-lg shrink-0">
+                   <div className="p-2 bg-indigo-50 text-indigo-500 dark:bg-indigo-500/10 dark:text-indigo-400 rounded-lg shrink-0">
                       <Upload className="h-4 w-4" />
                    </div>
                    <div className="flex-1">
@@ -115,13 +115,13 @@ export function EditProductDialog({
                 </div>
                 
                 <div className="relative flex items-center py-1">
-                  <div className="flex-grow border-t border-gray-100"></div>
+                  <div className="flex-grow border-t border-gray-100 dark:border-white/[0.04]"></div>
                   <span className="flex-shrink-0 mx-3 text-[10px] font-bold text-muted-foreground/50 uppercase">OR</span>
-                  <div className="flex-grow border-t border-gray-100"></div>
+                  <div className="flex-grow border-t border-gray-100 dark:border-white/[0.04]"></div>
                 </div>
 
                 <div className="flex items-center gap-3">
-                   <div className="p-2 bg-emerald-50 text-emerald-500 rounded-lg shrink-0">
+                   <div className="p-2 bg-emerald-50 text-emerald-500 dark:bg-emerald-500/10 dark:text-emerald-400 rounded-lg shrink-0">
                       <LinkIcon className="h-4 w-4" />
                    </div>
                    <Input 
@@ -138,9 +138,9 @@ export function EditProductDialog({
 
           </div>
 
-          <div className="px-8 py-5 border-t border-gray-100 bg-white flex justify-end gap-3 rounded-b-[1.5rem]">
-             <Button type="button" variant="ghost" onClick={() => setOpen(false)} className="h-10 px-5 rounded-xl font-semibold text-muted-foreground hover:bg-gray-100">Reset</Button>
-             <Button type="submit" disabled={loading} className="h-10 px-6 rounded-xl font-semibold bg-indigo-600 hover:bg-indigo-700 shadow-[0_4px_14px_0_rgba(79,70,229,0.39)] transition-all">
+          <div className="px-8 py-5 border-t border-gray-100 dark:border-white/[0.04] bg-white dark:bg-[#141415] dark:border dark:border-white/[0.04] dark:shadow-none flex justify-end gap-3 rounded-b-[1.5rem]">
+             <Button type="button" variant="ghost" onClick={() => setOpen(false)} className="h-10 px-5 rounded-xl font-semibold text-muted-foreground dark:text-[#A1A1AA] hover:bg-gray-100 dark:hover:bg-white/[0.04]">Reset</Button>
+             <Button type="submit" disabled={loading} className="h-10 px-6 rounded-xl font-semibold bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-white dark:text-black dark:hover:bg-gray-200 dark:shadow-none shadow-[0_4px_14px_0_rgba(79,70,229,0.39)] transition-all">
                {loading ? t('dashboard.syncing') : t('products.edit')}
              </Button>
           </div>

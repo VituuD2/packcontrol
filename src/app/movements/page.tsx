@@ -76,22 +76,22 @@ export default async function MovementsPage() {
 
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="relative w-full max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground dark:text-[#A1A1AA]" />
           <Input placeholder="Search movements..." className="pl-9 h-10 w-full bg-background/50 border-border/80 rounded-lg shadow-sm" />
         </div>
       </div>
 
-      <div className="rounded-2xl border border-border/80 shadow-sm bg-card/60 backdrop-blur-md overflow-hidden">
+      <div className="rounded-2xl bg-card/60 dark:bg-[#141415] border-border/80 dark:border-white/[0.04] shadow-sm dark:shadow-none bg-card/60 backdrop-blur-md overflow-hidden">
          {movements.length > 0 ? (
            <Table>
-              <TableHeader className="bg-muted/30">
+              <TableHeader className="bg-muted/30 dark:bg-white/[0.04]">
                 <TableRow className="hover:bg-transparent">
-                  <TableHead className="w-[100px] font-semibold text-muted-foreground">{t('movements.type')}</TableHead>
-                  <TableHead className="font-semibold text-muted-foreground">{t('movements.item')}</TableHead>
-                  <TableHead className="font-semibold text-muted-foreground">{t('movements.quantity')}</TableHead>
-                  <TableHead className="font-semibold text-muted-foreground">{t('movements.source')}</TableHead>
-                  <TableHead className="font-semibold text-muted-foreground">Reference</TableHead>
-                  <TableHead className="text-right font-semibold text-muted-foreground">{t('movements.date')}</TableHead>
+                  <TableHead className="w-[100px] font-semibold text-muted-foreground dark:text-[#A1A1AA]">{t('movements.type')}</TableHead>
+                  <TableHead className="font-semibold text-muted-foreground dark:text-[#A1A1AA]">{t('movements.item')}</TableHead>
+                  <TableHead className="font-semibold text-muted-foreground dark:text-[#A1A1AA]">{t('movements.quantity')}</TableHead>
+                  <TableHead className="font-semibold text-muted-foreground dark:text-[#A1A1AA]">{t('movements.source')}</TableHead>
+                  <TableHead className="font-semibold text-muted-foreground dark:text-[#A1A1AA]">Reference</TableHead>
+                  <TableHead className="text-right font-semibold text-muted-foreground dark:text-[#A1A1AA]">{t('movements.date')}</TableHead>
                   <TableHead className="w-[60px]"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -104,29 +104,29 @@ export default async function MovementsPage() {
                   }).format(dateObj)
 
                   return (
-                    <TableRow key={mov.id} className="group hover:bg-muted/20 transition-colors">
+                    <TableRow key={mov.id} className="group hover:bg-muted/20 dark:hover:bg-white/[0.02] transition-colors">
                       <TableCell>
                         {mov.movement_type === 'out' ? (
-                           <Badge className="bg-red-50 text-red-700 border-red-200/50 uppercase tracking-wider text-[10px] shadow-none">{t('movements.out')}</Badge>
+                           <Badge className="bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400 border-red-200/50 dark:border-red-500/20 uppercase tracking-wider text-[10px] shadow-none">{t('movements.out')}</Badge>
                         ) : mov.movement_type === 'in' ? (
-                           <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200/50 uppercase tracking-wider text-[10px] shadow-none">{t('movements.in')}</Badge>
+                           <Badge className="bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-500/20 uppercase tracking-wider text-[10px] shadow-none">{t('movements.in')}</Badge>
                         ) : (
-                           <Badge className="bg-orange-50 text-orange-700 border-orange-200/50 uppercase tracking-wider text-[10px] shadow-none">Adj</Badge>
+                           <Badge className="bg-orange-50 text-orange-700 dark:bg-orange-500/10 dark:text-orange-400 border-orange-200/50 dark:border-orange-500/20 uppercase tracking-wider text-[10px] shadow-none">Adj</Badge>
                         )}
                       </TableCell>
                       <TableCell className="font-medium">
                         {mov.packaging_items?.name || t('dashboard.unknown_item')}
-                        <span className="block text-xs font-mono text-muted-foreground/60">{mov.packaging_items?.sku_internal}</span>
+                        <span className="block text-xs font-mono text-muted-foreground dark:text-[#A1A1AA]/60">{mov.packaging_items?.sku_internal}</span>
                       </TableCell>
                       <TableCell>
                         <span className={`font-bold tabular-nums tracking-tight ${mov.movement_type === 'out' ? 'text-red-600' : 'text-emerald-600'}`}>
                           {mov.movement_type === 'out' ? '-' : '+'}{mov.quantity}
                         </span>
-                        <span className="text-xs text-muted-foreground ml-1">{mov.packaging_items?.unit}</span>
+                        <span className="text-xs text-muted-foreground dark:text-[#A1A1AA] ml-1">{mov.packaging_items?.unit}</span>
                       </TableCell>
-                      <TableCell className="text-muted-foreground text-sm uppercase text-xs font-semibold">{mov.source_type || t('movements.system')}</TableCell>
-                      <TableCell className="text-foreground/80 font-medium text-sm">{mov.source_id || "-"}</TableCell>
-                      <TableCell className="text-right text-sm tabular-nums text-muted-foreground">
+                      <TableCell className="text-muted-foreground dark:text-[#A1A1AA] text-sm uppercase text-xs font-semibold">{mov.source_type || t('movements.system')}</TableCell>
+                      <TableCell className="text-foreground/80 dark:text-[#E2E2E2] font-medium text-sm">{mov.source_id || "-"}</TableCell>
+                      <TableCell className="text-right text-sm tabular-nums text-muted-foreground dark:text-[#A1A1AA]">
                         {formattedDate}
                       </TableCell>
                       <TableCell>
@@ -140,9 +140,9 @@ export default async function MovementsPage() {
               </TableBody>
             </Table>
          ) : (
-            <div className="flex flex-col items-center justify-center p-16 text-center text-muted-foreground/60">
+            <div className="flex flex-col items-center justify-center p-16 text-center text-muted-foreground dark:text-[#A1A1AA]/60">
                <History className="h-12 w-12 mb-4 opacity-20" />
-               <h3 className="text-lg font-semibold text-foreground/80 tracking-tight">{t('movements.no_data')}</h3>
+               <h3 className="text-lg font-semibold text-foreground/80 dark:text-[#E2E2E2] tracking-tight">{t('movements.no_data')}</h3>
             </div>
          )}
       </div>

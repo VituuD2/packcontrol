@@ -83,18 +83,22 @@ export default async function Dashboard() {
     chartDataMap[dayName] = { name: dayName }
   }
 
+  // Fetch ALL out movements for the global totalItemsConsumed metric
+  const { data: allOutMovements } = await supabase
+    .from('packaging_movements')
+    .select('quantity')
+    .eq('movement_type', 'out')
+    
   let totalItemsConsumed = 0
+  if (allOutMovements) {
+      totalItemsConsumed = allOutMovements.reduce((acc, mov) => acc + (mov.quantity || 0), 0)
+  }
+
   sevenDayMovements.forEach(mov => {
     if (mov.movement_type === 'out') {
       const dayName = new Intl.DateTimeFormat('en-US', { weekday: 'short' }).format(new Date(mov.created_at))
       const itemName = mov.packaging_items?.name || "Other"
       chartDataMap[dayName][itemName] = (chartDataMap[dayName][itemName] || 0) + mov.quantity
-      
-      // Calculate today's items consumed
-      const movDate = new Date(mov.created_at)
-      if (movDate >= todayStart) {
-        totalItemsConsumed += mov.quantity
-      }
     }
   })
   

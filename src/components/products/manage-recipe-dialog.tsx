@@ -61,19 +61,19 @@ export function ManageRecipeDialog({
         <PackagePlus className="w-3.5 h-3.5" /> {t('products.recipe')}
       </DialogTrigger>
       
-      <DialogContent className="sm:max-w-[460px] p-0 border-0 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] rounded-[1.5rem] overflow-hidden bg-white">
+      <DialogContent className="sm:max-w-[460px] p-0 border-0 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] rounded-[1.5rem] overflow-hidden bg-white dark:bg-[#141415] dark:border dark:border-white/[0.04] dark:shadow-none">
         <form onSubmit={handleSubmit} className="flex flex-col">
           
           <div className="px-8 pt-8 pb-4">
             <DialogHeader>
-              <DialogTitle className="text-xl font-bold tracking-tight text-foreground/90 flex items-center gap-2">
-                <div className="p-2 bg-emerald-50 text-emerald-500 rounded-xl inline-flex"><PackagePlus className="w-5 h-5" /></div>
+              <DialogTitle className="text-xl font-bold tracking-tight text-foreground/90 dark:text-[#EDEDED] flex items-center gap-2">
+                <div className="p-2 bg-emerald-50 text-emerald-500 dark:bg-emerald-500/10 dark:text-emerald-400 rounded-xl inline-flex"><PackagePlus className="w-5 h-5" /></div>
                 Build Component Tree
               </DialogTitle>
             </DialogHeader>
           </div>
 
-          <div className="px-8 py-6 space-y-6 bg-gray-50/30">
+          <div className="px-8 py-6 space-y-6 bg-gray-50/30 dark:bg-black/20">
             <div className="space-y-1.5">
               <Label htmlFor="packaging_id" className="text-xs font-bold text-muted-foreground uppercase tracking-wider ml-1">Packaging Component</Label>
               <div className="relative">
@@ -81,7 +81,7 @@ export function ManageRecipeDialog({
                    <Box className="h-4 w-4 text-muted-foreground/40" />
                  </div>
                  <Select name="packaging_id" required>
-                   <SelectTrigger className="flex h-12 w-full pl-10 pr-4 rounded-xl border-gray-200/60 bg-white shadow-sm text-[14px] font-medium text-foreground focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors">
+                   <SelectTrigger className="flex h-12 w-full pl-10 pr-4 rounded-xl border-gray-200/60 bg-white dark:bg-[#141415] dark:border dark:border-white/[0.04] dark:shadow-none shadow-sm text-[14px] font-medium text-foreground focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors">
                      <SelectValue placeholder="Select a component..." />
                    </SelectTrigger>
                    <SelectContent>
@@ -104,15 +104,15 @@ export function ManageRecipeDialog({
                   step="1" 
                   defaultValue="1" 
                   required 
-                  className="h-12 bg-white border-gray-200/60 focus-visible:ring-indigo-500/20 focus-visible:border-indigo-500 rounded-xl px-4 text-[16px] shadow-sm font-bold tracking-tight text-center"
+                  className="h-12 bg-white dark:bg-[#141415] dark:border dark:border-white/[0.04] dark:shadow-none border-gray-200/60 focus-visible:ring-indigo-500/20 focus-visible:border-indigo-500 rounded-xl px-4 text-[16px] shadow-sm font-bold tracking-tight text-center"
                 />
               </div>
             </div>
           </div>
 
-          <div className="px-8 py-5 border-t border-gray-100 bg-white flex items-center justify-between rounded-b-[1.5rem]">
-             <Button type="button" variant="ghost" onClick={() => setOpen(false)} className="h-10 px-5 rounded-xl font-semibold text-muted-foreground hover:bg-gray-100">Cancel</Button>
-             <Button type="submit" disabled={loading} className="h-10 px-6 rounded-xl font-semibold bg-zinc-900 hover:bg-zinc-800 text-white shadow-[0_4px_14px_0_rgba(0,0,0,0.2)] transition-all">
+          <div className="px-8 py-5 border-t border-gray-100 dark:border-white/[0.04] bg-white dark:bg-[#141415] dark:border dark:border-white/[0.04] dark:shadow-none flex items-center justify-between rounded-b-[1.5rem]">
+             <Button type="button" variant="ghost" onClick={() => setOpen(false)} className="h-10 px-5 rounded-xl font-semibold text-muted-foreground dark:text-[#A1A1AA] hover:bg-gray-100 dark:hover:bg-white/[0.04]">Cancel</Button>
+             <Button type="submit" disabled={loading} className="h-10 px-6 rounded-xl font-semibold bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-white dark:text-black dark:hover:bg-gray-200 dark:shadow-none shadow-[0_4px_14px_0_rgba(0,0,0,0.2)] transition-all">
                {loading ? "Injecting..." : "Inject to Recipe"}
              </Button>
           </div>

@@ -163,7 +163,7 @@ export default async function ProductsPage() {
                     <div className="flex flex-wrap gap-1">
                       {product.product_packaging_rules.map((rule: any, idx: number) => (
                         <span key={idx} className="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 bg-indigo-50 dark:bg-indigo-500/10 dark:text-indigo-400 px-2 py-0.5 rounded-md border border-indigo-100/50">
-                          {rule.quantity_used}x <span className="truncate max-w-[80px] text-indigo-900/70">{rule.packaging_items?.name}</span>
+                          {rule.quantity_used}x <span className="truncate max-w-[80px] text-indigo-900/70 dark:text-indigo-200/70">{rule.packaging_items?.name}</span>
                         </span>
                       ))}
                     </div>

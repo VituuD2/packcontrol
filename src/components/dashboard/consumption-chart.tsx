@@ -29,14 +29,6 @@ export function ConsumptionChart({ data }: { data: any[] }) {
   return (
     <ResponsiveContainer width="100%" height="100%">
       <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-        <defs>
-          {keys.map((key, i) => (
-            <linearGradient key={`color-${key}`} id={`color-${i}`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor={colors[i % colors.length]} stopOpacity={0.3}/>
-              <stop offset="95%" stopColor={colors[i % colors.length]} stopOpacity={0}/>
-            </linearGradient>
-          ))}
-        </defs>
         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.04)" />
         <XAxis
           dataKey="name"
@@ -69,8 +61,8 @@ export function ConsumptionChart({ data }: { data: any[] }) {
             dataKey={key} 
             stroke={colors[i % colors.length]} 
             strokeWidth={3}
-            fillOpacity={1} 
-            fill={`url(#color-${i})`} 
+            fill={colors[i % colors.length]}
+            fillOpacity={0.15} 
             activeDot={{ r: 6, strokeWidth: 0 }}
           />
         ))}
