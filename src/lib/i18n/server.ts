@@ -1,9 +1,22 @@
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { ptBR, enUS } from "./dictionaries";
 
 export async function getTranslation() {
   const cookieStore = await cookies();
-  const lang = cookieStore.get("app_lang")?.value || "pt";
+  const langCookie = cookieStore.get("app_lang")?.value;
+  
+  let lang = "pt"; // default fallback
+  
+  if (langCookie) {
+    lang = langCookie;
+  } else {
+    const headersList = await headers();
+    const acceptLanguage = headersList.get("accept-language");
+    if (acceptLanguage && acceptLanguage.toLowerCase().startsWith("en")) {
+      lang = "en";
+    }
+  }
+
   const dict = lang === "en" ? enUS : ptBR;
 
   return function t(key: string): string {

@@ -25,6 +25,16 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     const saved = localStorage.getItem("app_lang") as Language;
     if (saved) {
       setLang(saved);
+      document.cookie = `app_lang=${saved}; path=/; max-age=31536000; SameSite=Lax`;
+    } else {
+      const browserLang = typeof navigator !== "undefined" && navigator.language ? navigator.language.toLowerCase() : "";
+      if (browserLang.startsWith("en")) {
+        setLang("en");
+        document.cookie = `app_lang=en; path=/; max-age=31536000; SameSite=Lax`;
+      } else {
+        setLang("pt");
+        document.cookie = `app_lang=pt; path=/; max-age=31536000; SameSite=Lax`;
+      }
     }
     setMounted(true);
   }, []);

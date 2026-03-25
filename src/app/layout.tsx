@@ -32,8 +32,8 @@ export default function RootLayout({
       <body className={`${inter.variable} ${jbMono.variable} min-h-screen bg-background font-sans antialiased overflow-hidden`}>
         <ThemeProvider
             attribute="class"
-            defaultTheme="light"
-            enableSystem={false}
+            defaultTheme="system"
+            enableSystem={true}
             disableTransitionOnChange
         >
           <I18nProvider>
