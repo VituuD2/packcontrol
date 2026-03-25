@@ -18,3 +18,4 @@ SET status = 'pending' WHERE processed = false OR processed IS NULL;
 -- Create indexes for worker queue performance
 CREATE INDEX idx_webhook_events_queue ON webhook_events(status, next_retry_at) WHERE status IN ('pending', 'failed');
 CREATE INDEX idx_webhook_events_idempotency ON webhook_events(idempotency_key);
+ 
