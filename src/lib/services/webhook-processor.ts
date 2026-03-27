@@ -66,14 +66,13 @@ export async function processWebhookEvent(supabase: SupabaseClient, eventId: str
       if (existingMovements && existingMovements.length > 0) {
         await supabase.from('webhook_events').update({ 
           status: 'processed', 
+          processed: true,
           processed_at: new Date().toISOString() 
         }).eq('id', eventId)
         return { success: true, message: 'Duplicate order detected via movements' }
       }
 
       // 3. Process Line Items
-      let allItemsProcessed = true
-      let errorMessages: string[] = []
 
       for (const line_item of parsedOrder.line_items) {
         const itemSku = line_item.sku
@@ -96,22 +95,19 @@ export async function processWebhookEvent(supabase: SupabaseClient, eventId: str
           .single()
 
         if (productError || !productData) {
-          // Auto-registration if missing (behavior preserved from original)
+          // Auto-registration if missing — skip gracefully (no packaging to deduct)
           await supabase.from("products").upsert({
             sku: itemSku,
             name: line_item.name || "Auto-imported Product",
             active: false
           }, { onConflict: 'sku' })
-          
-          allItemsProcessed = false
-          errorMessages.push(`Sku ${itemSku} not configured or missing rules`)
+          // Skip this line item — product has no packaging config yet
           continue
         }
 
         const rules = productData.product_packaging_rules
         if (!rules || !Array.isArray(rules) || rules.length === 0) {
-          allItemsProcessed = false
-          errorMessages.push(`Sku ${itemSku} has no packaging rules`)
+          // Product exists but has no packaging rules — skip gracefully
           continue
         }
 
@@ -139,9 +135,7 @@ export async function processWebhookEvent(supabase: SupabaseClient, eventId: str
             .eq("id", rule.packaging_item_id)
 
           if (updateError) {
-            allItemsProcessed = false
-            errorMessages.push(`Failed to update stock for rule ${rule.packaging_item_id}`)
-            continue
+            throw new Error(`Failed to update stock for packaging item ${rule.packaging_item_id}: ${updateError.message}`)
           }
 
           // Ledger entry
@@ -158,14 +152,12 @@ export async function processWebhookEvent(supabase: SupabaseClient, eventId: str
         }
       }
 
-      if (!allItemsProcessed) {
-        throw new Error(errorMessages.join('; '))
-      }
     }
 
     // 5. Finalize Event
     await supabase.from('webhook_events').update({
       status: 'processed',
+      processed: true,
       processed_at: new Date().toISOString(),
       last_error: null
     }).eq('id', eventId)
