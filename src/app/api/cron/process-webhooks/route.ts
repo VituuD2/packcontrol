@@ -19,18 +19,32 @@ export async function GET(req: NextRequest) {
   const supabase = createClient(supabaseUrl, supabaseKey)
 
   const BATCH_SIZE = 10
-  const now = new Date().toISOString()
+  const now = new Date()
   const force = req.nextUrl.searchParams.get('force') === 'true'
 
+  // 0. Stale Lock Recovery: Reset events stuck in 'processing' for > 2 minutes
+  const staleThreshold = new Date(now.getTime() - 2 * 60 * 1000).toISOString()
+  await supabase
+    .from('webhook_events')
+    .update({ status: 'pending', locked_at: null, locked_by: null })
+    .eq('status', 'processing')
+    .lt('locked_at', staleThreshold)
+
+  // Also recover any 'processing' events that have no locked_at at all (orphaned)
+  await supabase
+    .from('webhook_events')
+    .update({ status: 'pending', locked_at: null, locked_by: null })
+    .eq('status', 'processing')
+    .is('locked_at', null)
+
   // 1. Fetch events to process
-  // We look for pending or failed events
   let dbQuery = supabase
     .from('webhook_events')
     .select('id, status')
     .in('status', ['pending', 'failed'])
   
   if (!force) {
-    dbQuery = dbQuery.lte('next_retry_at', now)
+    dbQuery = dbQuery.lte('next_retry_at', now.toISOString())
   }
 
   const { data: queueItems, error: fetchError } = await dbQuery
