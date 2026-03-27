@@ -23,7 +23,7 @@ export default async function Dashboard() {
   const { data: allProcessedEvents } = await supabase
     .from('webhook_events')
     .select('external_id')
-    .eq('processed', true)
+    .eq('status', 'processed')
     
   // Deduplicate using a Set
   const uniqueProcessIds = new Set(allProcessedEvents?.map(e => e.external_id).filter(Boolean))

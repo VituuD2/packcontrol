@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     const { data: pendingEvents, error: fetchError } = await supabaseClient
       .from("webhook_events")
       .select("*")
-      .eq("processed", false)
+      .in("status", ["pending", "failed"])
 
     if (fetchError) {
       return NextResponse.json({ error: "Database error", details: fetchError }, { status: 500 })
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
       }
 
       if (isDuplicate) {
-        await supabaseClient.from("webhook_events").update({ processed: true }).eq("id", event.id);
+        await supabaseClient.from("webhook_events").update({ status: "processed", processed_at: new Date().toISOString() }).eq("id", event.id);
         continue;
       }
 
@@ -124,7 +124,7 @@ export async function POST(req: NextRequest) {
       if (successfullyProcessed) {
         await supabaseClient
           .from("webhook_events")
-          .update({ processed: true })
+          .update({ status: "processed", processed_at: new Date().toISOString() })
           .eq("id", event.id);
         newlyProcessedCount++;
       }
