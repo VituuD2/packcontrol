@@ -46,6 +46,7 @@ export async function processWebhookEvent(supabase: SupabaseClient, eventId: str
       if (!payload || typeof payload !== 'object' || (!payload.id && !payload.number)) {
          await supabase.from('webhook_events').update({
             status: 'processed', // Skip if it's not processable as an order
+            processed: true,
             last_error: `Skipped: Payload missing typical order fields (ID/Number). Event type: ${eventType}`
          }).eq('id', eventId)
          return { success: true, message: 'Skipped malformed or non-order payload' }
